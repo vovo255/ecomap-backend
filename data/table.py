@@ -46,6 +46,11 @@ class Article(SqlAlchemyBase, SerializerMixin):
         article['date'] = datetime.fromtimestamp(self.date, timezone.utc).astimezone().isoformat()
         return article
 
+    def get_short_desc(self):
+        article = self.to_dict(only=('id', 'image', 'title'))
+        article['countOfLikes'] = len(self.likes)
+        return article
+
 
 class Like(SqlAlchemyBase):
     __tablename__ = 'likes'

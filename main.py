@@ -253,6 +253,62 @@ def unlike_article(article_id):
         return make_response(jsonify({'error': 'Something gone wrong'}), 400)
 
 
+@blueprint.route('/api/article', methods=['GET'])
+def get_articles():
+    try:
+        params = request.args
+        token = request.headers['authorization']
+
+        session = db_session.create_session()
+        user = session.query(User).filter(User.token == token).first()
+
+        if user is None:
+            if user is None:
+                return make_response(jsonify({'error': 'Authorization failed'}), 403)
+
+        if user.expires_at < datetime.now().timestamp():
+            return make_response(jsonify({'error': 'Authorization failed'}), 403)
+
+        page = int(params.get('page'))
+        limit = int(params.get('limit'))
+        search = params.get('search')
+
+        if search is None:
+            articles = list(session.query(Article).all())
+        else:
+            articles = list(session.query(Article).filter(Article.title == search).all())
+
+        articles_perf = list()
+        response = dict()
+        total = len(articles)
+
+        response['currentPage'] = page
+        response['lastPage'] = total // limit  # + (1 if total - total // limit > 0 else 0) TODO: Wtf?
+        response['perPage'] = limit
+        response['data'] = []
+
+        if len(articles) <= (page - 1) * limit:
+            response['data'] = []
+            response['total'] = 0
+            session.close()
+            return make_response(response, 200)
+
+        articles_perf = articles[(page - 1) * limit: page * limit]
+        for article in articles_perf:
+            article: Article
+            response['data'].append(article.get_short_desc())
+
+        response['total'] = len(response['data'])
+
+        return make_response(response, 200)
+
+    except KeyError:
+        return make_response(jsonify({'error': 'Missing argument'}), 400)
+    except Exception as e:
+        traceback.print_exc()
+        return make_response(jsonify({'error': 'Something gone wrong'}), 400)
+
+
 if __name__ == '__main__':
     app = Flask(__name__)
     app.register_blueprint(blueprint)
