@@ -90,39 +90,25 @@ def start_login():
         return make_response(response, 200)
 
     except KeyError:
-        return make_response(jsonify({'error': 'Missing argument'}), 400)
+        return make_response(jsonify({'error': 'Missing argument'
+                                      }), 400)
     except Exception as e:
         return make_response(jsonify({'error': 'Something gone wrong'}), 400)
 
 
-@blueprint.route('/api/profile', methods=['GET'])
-def start_profile():
+
+
+@blueprint.route('/api/article', methods=['POST'])
+def start_login():
     try:
         params = request.json
         session = db_session.create_session()
-        if params['id?']:
-            exist_user: User = session.query(User).filter(User.id == params['id?']).first()
-        else:
-            exist_user: User = session.query(User).filter(User.token == params['authorization']).first()
-
-        if exist_user is None:
-            return make_response(jsonify({'error': 'User is not found'}), 200)
-        
-        response = dict()
-        response['name'] = exist_user.name
-        response['surname'] = exist_user.surname
-        response['nickname'] = exist_user.nickname
-        response['age'] = exist_user.age
-        response['gender'] = exist_user.gender
-        response['email'] = exist_user.email
-        session.close()
-        
-        return make_response(response, 200)
-
+        user = session.query(User).filter(User.token == params)
     except KeyError:
         return make_response(jsonify({'error': 'Missing argument'}), 400)
     except Exception as e:
         return make_response(jsonify({'error': 'Something gone wrong'}), 400)
+
 
 if __name__ == '__main__':
     app = Flask(__name__)
