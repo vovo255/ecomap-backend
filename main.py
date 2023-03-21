@@ -135,11 +135,42 @@ def post_article():
         response['id'] = article.id
         response['title'] = article.title
         response['content'] = article.content
-        response['date'] =  created.astimezone().isoformat()
+        response['date'] = created.astimezone().isoformat()
         response['image'] = article.image
         response['template'] = article.template
         response['author'] = user.to_json()
+        print(article.to_json())
         session.close()
+
+        return make_response(response, 200)
+
+    except KeyError:
+        return make_response(jsonify({'error': 'Missing argument'}), 400)
+    except Exception as e:
+        traceback.print_exc()
+        return make_response(jsonify({'error': 'Something gone wrong'}), 400)
+
+
+@blueprint.route('/api/article/<article_id>', methods=['GET'])
+def get_article(article_id):
+    try:
+        token = request.headers['authorization']
+
+        session = db_session.create_session()
+        user = session.query(User).filter(User.token == token).first()
+
+        if user is None:
+            if user is None:
+                return make_response(jsonify({'error': 'Authorization failed'}), 403)
+
+        if user.expires_at < datetime.now().timestamp():
+            return make_response(jsonify({'error': 'Authorization failed'}), 403)
+
+        article = session.query(Article).filter(Article.id == article_id).first()
+        if article is None:
+            return make_response(jsonify({'error': 'Article does not exist'}), 404)
+
+        response = article.to_json()
 
         return make_response(response, 200)
 

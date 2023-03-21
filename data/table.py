@@ -3,7 +3,7 @@ import sqlalchemy
 import time
 from sqlalchemy import orm
 from sqlalchemy_serializer import SerializerMixin
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 class User(SqlAlchemyBase, SerializerMixin):
@@ -22,13 +22,12 @@ class User(SqlAlchemyBase, SerializerMixin):
     expires_at = sqlalchemy.Column(sqlalchemy.Integer)
     articles = sqlalchemy.orm.relationship("Article", back_populates="author")
 
-
     def to_json(self):
-        exam_json = self.to_dict(only=('id', 'name', 'surname', 'age', 'nickname', 'gender'))
-        return exam_json
+        user_json = self.to_dict(only=('id', 'name', 'surname', 'age', 'nickname', 'gender'))
+        return user_json
 
 
-class Article(SqlAlchemyBase):
+class Article(SqlAlchemyBase, SerializerMixin):
     __tablename__ = 'articles'
     id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True, autoincrement=True)
     author_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('users.id'))
@@ -38,3 +37,9 @@ class Article(SqlAlchemyBase):
     content = sqlalchemy.Column(sqlalchemy.Text, nullable=False)
     template = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
     image = sqlalchemy.Column(sqlalchemy.String(100), nullable=False)
+
+    def to_json(self):
+        article = self.to_dict(only=('id', 'title', 'content', 'image', 'template'))
+        article['author'] = self.author.to_json()
+        article['date'] = datetime.fromtimestamp(self.date, timezone.utc).astimezone().isoformat()
+        return article
