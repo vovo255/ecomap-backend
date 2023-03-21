@@ -90,6 +90,21 @@ def start_login():
         return make_response(response, 200)
 
     except KeyError:
+        return make_response(jsonify({'error': 'Missing argument'
+                                      }), 400)
+    except Exception as e:
+        return make_response(jsonify({'error': 'Something gone wrong'}), 400)
+
+
+
+
+@blueprint.route('/api/article', methods=['POST'])
+def start_login():
+    try:
+        params = request.json
+        session = db_session.create_session()
+        user = session.query(User).filter(User.token == params)
+    except KeyError:
         return make_response(jsonify({'error': 'Missing argument'}), 400)
     except Exception as e:
         return make_response(jsonify({'error': 'Something gone wrong'}), 400)
