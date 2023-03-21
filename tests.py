@@ -30,5 +30,23 @@ def test_login():
     pprint(resp.json())
 
 
+def test_post_article(token):
+    test_3_query = dict()
+    test_3_query['title'] = 'Статья об экологии'
+    test_3_query['content'] = 'Какая-то оч длинная строка'
+    test_3_query['image'] = 'https://photo.com/photo.jpg'
+    test_3_query['template'] = 1
+
+    headers = dict()
+    headers['authorization'] = token
+
+    resp = post('http://127.0.0.1:8080/api/article', json=test_3_query, headers=headers)
+
+    print(resp.status_code)
+    pprint(resp.json())
+
+
 if __name__ == '__main__':
-    test_login()
+    # test_registration()
+    #test_login()
+    test_post_article('17a2403d9ce62d6f957eea19b527530b96a6692706916fc94bdb097ab2af49ca')
