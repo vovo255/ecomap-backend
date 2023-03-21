@@ -21,6 +21,7 @@ class User(SqlAlchemyBase, SerializerMixin):
     token = sqlalchemy.Column(sqlalchemy.String, nullable=False)
     expires_at = sqlalchemy.Column(sqlalchemy.Integer)
     articles = sqlalchemy.orm.relationship("Article", back_populates="author")
+    likes = sqlalchemy.orm.relationship("Like", back_populates="liker")
 
     def to_json(self):
         user_json = self.to_dict(only=('id', 'name', 'surname', 'age', 'nickname', 'gender'))
@@ -37,9 +38,19 @@ class Article(SqlAlchemyBase, SerializerMixin):
     content = sqlalchemy.Column(sqlalchemy.Text, nullable=False)
     template = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
     image = sqlalchemy.Column(sqlalchemy.String(100), nullable=False)
+    likes = sqlalchemy.orm.relationship("Like", back_populates="liked")
 
     def to_json(self):
         article = self.to_dict(only=('id', 'title', 'content', 'image', 'template'))
         article['author'] = self.author.to_json()
         article['date'] = datetime.fromtimestamp(self.date, timezone.utc).astimezone().isoformat()
         return article
+
+
+class Like(SqlAlchemyBase):
+    __tablename__ = 'likes'
+    id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True, autoincrement=True)
+    liker_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('users.id'))
+    liker = orm.relationship("User")
+    liked_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('articles.id'))
+    liked = orm.relationship("Article")
