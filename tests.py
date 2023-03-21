@@ -65,10 +65,20 @@ def test_like(token):
     print(resp.status_code)
     pprint(resp.json())
 
+def test_unlike(token):
+    headers = dict()
+    headers['authorization'] = token
+
+    resp = get('http://127.0.0.1:8080/api/article/3/unlike', headers=headers)
+
+    print(resp.status_code)
+    pprint(resp.json())
+
 
 if __name__ == '__main__':
     # test_registration()
     # test_login()
     # test_post_article('17a2403d9ce62d6f957eea19b527530b96a6692706916fc94bdb097ab2af49ca')
     #test_get_article('17a2403d9ce62d6f957eea19b527530b96a6692706916fc94bdb097ab2af49ca')
-    test_like('17a2403d9ce62d6f957eea19b527530b96a6692706916fc94bdb097ab2af49ca')
+    #test_like('17a2403d9ce62d6f957eea19b527530b96a6692706916fc94bdb097ab2af49ca')
+    test_unlike('17a2403d9ce62d6f957eea19b527530b96a6692706916fc94bdb097ab2af49ca')
