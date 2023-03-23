@@ -313,4 +313,4 @@ if __name__ == '__main__':
     app = Flask(__name__)
     app.register_blueprint(blueprint)
     db_session.global_init(DB_CONN_STR)
-    app.run(host='0.0.0.0', port=8080, debug=True)
+    app.run(host='0.0.0.0', port=5243, debug=True)
