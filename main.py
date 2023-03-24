@@ -2,9 +2,10 @@ import flask
 from flask import Flask, jsonify, request, make_response
 from data import db_session
 from datetime import datetime, timedelta, timezone
-from data.table import User
+from data.table import User, Article, Like
 from user_help import check_password, make_password, generate_token
 from settings import DB_CONN_STR, TOKEN_LIVE_TIME_S
+import traceback
 
 blueprint = flask.Blueprint('main_api', __name__,
                             template_folder='api_templates')
@@ -57,6 +58,7 @@ def start_register():
     except KeyError:
         return make_response(jsonify({'error': 'Missing argument'}), 400)
     except Exception as e:
+        traceback.print_exc()
         return make_response(jsonify({'error': 'Something gone wrong'}), 400)
 
 
@@ -79,12 +81,12 @@ def start_login():
 
         exist_user.token = generate_token()
         expires_at = (datetime.now(timezone.utc) + timedelta(seconds=TOKEN_LIVE_TIME_S))
-        exist_user.expires_at = expires_at.astimezone().isoformat()
+        exist_user.expires_at = int(expires_at.timestamp())
         session.commit()
 
         response = dict()
         response['token'] = exist_user.token
-        response['expiresIn'] = exist_user.expires_at
+        response['expiresIn'] = expires_at.astimezone().isoformat()
         session.close()
 
         return make_response(response, 200)
@@ -96,17 +98,214 @@ def start_login():
         return make_response(jsonify({'error': 'Something gone wrong'}), 400)
 
 
-
-
 @blueprint.route('/api/article', methods=['POST'])
-def start_login():
+def post_article():
     try:
         params = request.json
+        token = request.headers['authorization']
+
         session = db_session.create_session()
-        user = session.query(User).filter(User.token == params)
+        user = session.query(User).filter(User.token == token).first()
+
+        if user is None:
+            if user is None:
+                return make_response(jsonify({'error': 'Authorization failed'}), 403)
+
+        if user.expires_at < datetime.now().timestamp():
+            return make_response(jsonify({'error': 'Authorization failed'}), 403)
+
+        title = params['title']
+        content = params['content']
+        image = params['image']
+        template = params['template']
+        created = datetime.now(timezone.utc)
+
+        article = Article()
+        article.title = title
+        article.content = content
+        article.image = image
+        article.template = template
+        article.author = user
+        article.author_id = user.id
+        article.date = int(created.timestamp())
+        session.add(article)
+        session.commit()
+
+        response = dict()
+        response['id'] = article.id
+        response['title'] = article.title
+        response['content'] = article.content
+        response['date'] = created.astimezone().isoformat()
+        response['image'] = article.image
+        response['template'] = article.template
+        response['author'] = user.to_json()
+        print(article.to_json())
+        session.close()
+
+        return make_response(response, 200)
+
     except KeyError:
         return make_response(jsonify({'error': 'Missing argument'}), 400)
     except Exception as e:
+        traceback.print_exc()
+        return make_response(jsonify({'error': 'Something gone wrong'}), 400)
+
+
+@blueprint.route('/api/article/<article_id>', methods=['GET'])
+def get_article(article_id):
+    try:
+        token = request.headers['authorization']
+        session = db_session.create_session()
+        user = session.query(User).filter(User.token == token).first()
+
+        if user is None:
+            if user is None:
+                return make_response(jsonify({'error': 'Authorization failed'}), 403)
+
+        if user.expires_at < datetime.now().timestamp():
+            return make_response(jsonify({'error': 'Authorization failed'}), 403)
+
+        article = session.query(Article).filter(Article.id == article_id).first()
+        if article is None:
+            return make_response(jsonify({'error': 'Article does not exist'}), 404)
+
+        response = article.to_json()
+        session.close()
+        return make_response(response, 200)
+
+    except KeyError:
+        return make_response(jsonify({'error': 'Missing argument'}), 400)
+    except Exception as e:
+        traceback.print_exc()
+        return make_response(jsonify({'error': 'Something gone wrong'}), 400)
+
+
+@blueprint.route('/api/article/<article_id>/like', methods=['GET'])
+def like_article(article_id):
+    try:
+        token = request.headers['authorization']
+        session = db_session.create_session()
+        user = session.query(User).filter(User.token == token).first()
+
+        if user is None:
+            if user is None:
+                return make_response(jsonify({'error': 'Authorization failed'}), 403)
+
+        if user.expires_at < datetime.now().timestamp():
+            return make_response(jsonify({'error': 'Authorization failed'}), 403)
+
+        article = session.query(Article).filter(Article.id == article_id).first()
+        if article is None:
+            return make_response(jsonify({'error': 'Article does not exist'}), 404)
+
+        like = session.query(Like).filter(Like.liker == user, Like.liked == article).first()
+        if like is not None:
+            return make_response(jsonify({'error': 'Already liked'}), 400)
+
+        like = Like()
+        like.liker = user
+        like.liked = article
+        like.liked_id = article.id
+        like.liker_id = user.id
+        session.add(like)
+        session.commit()
+        session.close()
+
+        return make_response(jsonify({}), 200)
+    except KeyError:
+        return make_response(jsonify({'error': 'Missing argument'}), 400)
+    except Exception as e:
+        traceback.print_exc()
+        return make_response(jsonify({'error': 'Something gone wrong'}), 400)
+
+
+@blueprint.route('/api/article/<article_id>/unlike', methods=['GET'])
+def unlike_article(article_id):
+    try:
+        token = request.headers['authorization']
+        session = db_session.create_session()
+        user = session.query(User).filter(User.token == token).first()
+
+        if user is None:
+            if user is None:
+                return make_response(jsonify({'error': 'Authorization failed'}), 403)
+
+        if user.expires_at < datetime.now().timestamp():
+            return make_response(jsonify({'error': 'Authorization failed'}), 403)
+
+        article = session.query(Article).filter(Article.id == article_id).first()
+        if article is None:
+            return make_response(jsonify({'error': 'Article does not exist'}), 404)
+
+        like = session.query(Like).filter(Like.liker == user, Like.liked == article).first()
+        if like is None:
+            return make_response(jsonify({'error': 'Already unliked'}), 400)
+
+        session.delete(like)
+        session.commit()
+        session.close()
+
+        return make_response(jsonify({}), 200)
+    except KeyError:
+        return make_response(jsonify({'error': 'Missing argument'}), 400)
+    except Exception as e:
+        traceback.print_exc()
+        return make_response(jsonify({'error': 'Something gone wrong'}), 400)
+
+
+@blueprint.route('/api/article', methods=['GET'])
+def get_articles():
+    try:
+        params = request.args
+        token = request.headers['authorization']
+
+        session = db_session.create_session()
+        user = session.query(User).filter(User.token == token).first()
+
+        if user is None:
+            if user is None:
+                return make_response(jsonify({'error': 'Authorization failed'}), 403)
+
+        if user.expires_at < datetime.now().timestamp():
+            return make_response(jsonify({'error': 'Authorization failed'}), 403)
+
+        page = int(params.get('page'))
+        limit = int(params.get('limit'))
+        search = params.get('search')
+
+        if search is None:
+            articles = list(session.query(Article).all())
+        else:
+            articles = list(session.query(Article).filter(Article.title == search).all())
+
+        articles_perf = list()
+        response = dict()
+        total = len(articles)
+
+        response['currentPage'] = page
+        response['lastPage'] = total // limit  # + (1 if total - total // limit > 0 else 0) TODO: Wtf?
+        response['perPage'] = limit
+        response['data'] = []
+
+        if len(articles) <= (page - 1) * limit:
+            response['data'] = []
+            response['total'] = 0
+            session.close()
+            return make_response(response, 200)
+
+        articles_perf = articles[(page - 1) * limit: page * limit]
+        for article in articles_perf:
+            article: Article
+            response['data'].append(article.get_short_desc())
+
+        response['total'] = len(response['data'])
+
+        return make_response(response, 200)
+
+    except KeyError:
+        return make_response(jsonify({'error': 'Missing argument'}), 400)
+    except Exception as e:
+        traceback.print_exc()
         return make_response(jsonify({'error': 'Something gone wrong'}), 400)
 
 
@@ -114,4 +313,4 @@ if __name__ == '__main__':
     app = Flask(__name__)
     app.register_blueprint(blueprint)
     db_session.global_init(DB_CONN_STR)
-    app.run(host='0.0.0.0', port=8080, debug=True)
+    app.run(host='0.0.0.0', port=5243, debug=True)
