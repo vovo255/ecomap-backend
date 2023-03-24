@@ -2,10 +2,11 @@ import flask
 from flask import Flask, jsonify, request, make_response
 from data import db_session
 from datetime import datetime, timedelta, timezone
-from data.table import User, Article, Like
+from data.table import User, Article, Like, Point
 from user_help import check_password, make_password, generate_token
 from settings import DB_CONN_STR, TOKEN_LIVE_TIME_S
 import traceback
+from json import dumps
 
 blueprint = flask.Blueprint('main_api', __name__,
                             template_folder='api_templates')
@@ -299,6 +300,79 @@ def get_articles():
             response['data'].append(article.get_short_desc())
 
         response['total'] = len(response['data'])
+
+        return make_response(response, 200)
+
+    except KeyError:
+        return make_response(jsonify({'error': 'Missing argument'}), 400)
+    except Exception as e:
+        traceback.print_exc()
+        return make_response(jsonify({'error': 'Something gone wrong'}), 400)
+
+
+@blueprint.route('/api/map', methods=['POST'])
+def post_point():
+    try:
+        params = request.json
+        token = request.headers['authorization']
+
+        session = db_session.create_session()
+        user = session.query(User).filter(User.token == token).first()
+
+        if user is None:
+            if user is None:
+                return make_response(jsonify({'error': 'Authorization failed'}), 403)
+
+        if user.expires_at < datetime.now().timestamp():
+            return make_response(jsonify({'error': 'Authorization failed'}), 403)
+
+        point = Point()
+
+        point.title = params['title']
+        point.icon = params['iconImageHref']
+        point.address = params['address']
+        point.pointX = params['pointX']
+        point.pointY = params['pointY']
+        point._type = params['type']
+        point.images = dumps(params['images'])
+        point.comment = params['comment']
+        session.add(point)
+        session.commit()
+        session.close()
+        return make_response(jsonify({}), 200)
+
+    except KeyError:
+        return make_response(jsonify({'error': 'Missing argument'}), 400)
+    except Exception as e:
+        traceback.print_exc()
+        return make_response(jsonify({'error': 'Something gone wrong'}), 400)
+
+
+@blueprint.route('/api/map', methods=['GET'])
+def get_points():
+    try:
+        params = request.args
+        token = request.headers['authorization']
+        session = db_session.create_session()
+        user = session.query(User).filter(User.token == token).first()
+
+        if user is None:
+            if user is None:
+                return make_response(jsonify({'error': 'Authorization failed'}), 403)
+
+        if user.expires_at < datetime.now().timestamp():
+            return make_response(jsonify({'error': 'Authorization failed'}), 403)
+
+        _type = params.get('type')
+        points = session.query(Point).filter(Point._type == _type).all()
+        response = dict()
+        response['points'] = []
+
+        for point in points:
+            point: Point
+            response['points'].append(point.to_json())
+
+        session.close()
 
         return make_response(response, 200)
 
