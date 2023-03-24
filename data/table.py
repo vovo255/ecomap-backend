@@ -59,3 +59,16 @@ class Like(SqlAlchemyBase):
     liker = orm.relationship("User")
     liked_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('articles.id'))
     liked = orm.relationship("Article")
+
+
+class Point(SqlAlchemyBase, SerializerMixin):
+    __tablename__ = 'points'
+    id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True, autoincrement=True)
+    title = sqlalchemy.Column(sqlalchemy.String, nullable=False, default="")
+    icon = sqlalchemy.Column(sqlalchemy.String, nullable=False)
+    address = sqlalchemy.Column(sqlalchemy.String, nullable=False, default="")
+    point_x = sqlalchemy.Column(sqlalchemy.Float, nullable=False)
+    point_y = sqlalchemy.Column(sqlalchemy.Float, nullable=False)
+    _type = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
+    images = sqlalchemy.Column(sqlalchemy.String, nullable=False, default='[]')
+    comment = sqlalchemy.Column(sqlalchemy.String, nullable=False, default='')
