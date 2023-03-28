@@ -390,7 +390,7 @@ def get_points():
         return make_response(jsonify({'error': 'Something gone wrong'}), 400)
 
 
-@blueprint.route('/', methods=['GET', 'POST'])
+@blueprint.route('/api/upload', methods=['GET', 'POST'])
 def upload_file():
     try:
         if 'file' not in request.files:
