@@ -414,7 +414,7 @@ def get_points():
 
 
 @blueprint.route('/api/map/<id>', methods=['PUT'])
-def post_point(id):
+def put_point(id):
     try:
         params = request.json
         token = request.headers['authorization']
