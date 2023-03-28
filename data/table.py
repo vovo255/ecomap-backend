@@ -24,10 +24,16 @@ class User(SqlAlchemyBase, SerializerMixin):
     token = sqlalchemy.Column(sqlalchemy.String, nullable=False)
     expires_at = sqlalchemy.Column(sqlalchemy.Integer)
     articles = sqlalchemy.orm.relationship("Article", back_populates="author")
+    points = sqlalchemy.orm.relationship("Point", back_populates="user")
     likes = sqlalchemy.orm.relationship("Like", back_populates="liker")
 
     def to_json(self):
-        user_json = self.to_dict(only=('id', 'name', 'surname', 'age', 'nickname', 'gender', 'rate', 'is_admin', 'email'))
+        user_json = self.to_dict(
+            only=('id', 'name', 'surname', 'age', 'nickname', 'gender', 'rate', 'is_admin', 'email'))
+        user_json['points'] = []
+        for point in self.points:
+            point: Point
+            user_json['points'].append(point.to_json())
         return user_json
 
 
@@ -75,6 +81,7 @@ class Point(SqlAlchemyBase, SerializerMixin):
     _type = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
     images = sqlalchemy.Column(sqlalchemy.String, nullable=False, default='[]')
     comment = sqlalchemy.Column(sqlalchemy.String, nullable=False, default='')
+    user = orm.relationship("User")
 
     def to_json(self):
         point = self.to_dict(only=('title', 'icon', 'address', 'pointX', 'pointY', 'comment'))
