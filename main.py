@@ -65,7 +65,7 @@ def start_register():
 
         new_user.token = generate_token()
         expires_at = (datetime.now(timezone.utc) + timedelta(seconds=TOKEN_LIVE_TIME_S))
-        new_user.expires_at = expires_at.astimezone().isoformat()
+        new_user.expires_at = int(expires_at.timestamp())
 
         session.add(new_user)
         session.commit()

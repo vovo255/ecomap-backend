@@ -5,14 +5,14 @@ from settings import DOMEN
 
 def test_registration():
     test_1_query = dict()
-    test_1_query['name'] = 'Петя'
-    test_1_query['surname'] = 'Смирнов'
-    test_1_query['age'] = 43
-    test_1_query['nickname'] = 'PeSmi'
+    test_1_query['name'] = 'Админ'
+    test_1_query['surname'] = 'Админ'
+    test_1_query['age'] = 19
+    test_1_query['nickname'] = 'admin'
     test_1_query['gender'] = 1
-    test_1_query['email'] = 'test@test.ru'
-    test_1_query['password'] = 'qwerty12345'
-    test_1_query['confirmPassword'] = 'qwerty12345'
+    test_1_query['email'] = 'admin@mail.ru'
+    test_1_query['password'] = '123123'
+    test_1_query['confirmPassword'] = '123123'
 
     resp = post(DOMEN + 'api/registration', json=test_1_query)
 
@@ -22,8 +22,8 @@ def test_registration():
 
 def test_login():
     test_2_query = dict()
-    test_2_query['email'] = 'test@test.ru'
-    test_2_query['password'] = 'qwerty12345'
+    test_2_query['email'] = 'admin@mail.ru'
+    test_2_query['password'] = '123123'
 
     resp = post(DOMEN + 'api/login', json=test_2_query)
 
@@ -128,7 +128,7 @@ def test_get_points(token):
 
 
 if __name__ == '__main__':
-    # test_registration()
+    #test_registration()
     #test_login()
     # test_post_article('7d3c7d21c652f4bd24a53d644915fe095081d5b82ad674d7f23b48a88c730bec')
     # test_get_article('7d3c7d21c652f4bd24a53d644915fe095081d5b82ad674d7f23b48a88c730bec')
@@ -138,4 +138,4 @@ if __name__ == '__main__':
     # test_get_articles('7d3c7d21c652f4bd24a53d644915fe095081d5b82ad674d7f23b48a88c730bec')
     # test_post_point('863cbb3dc5e77537526abd30866836f09098e4f48b8bb8cf6dcc35e060171e1c')
     # test_get_points('863cbb3dc5e77537526abd30866836f09098e4f48b8bb8cf6dcc35e060171e1c')
-    test_profile('91edfa43110b8a0cb06f33a7c710e273d837c11b52d70035bd93f6775f8fed54')
+    test_profile('19b21fc2289c914e200abdc99616ab1397861d2448707935042eb4ec5297b166')
