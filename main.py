@@ -4,8 +4,10 @@ from data import db_session
 from datetime import datetime, timedelta, timezone
 from data.table import User, Article, Like
 from user_help import check_password, make_password, generate_token
-from settings import DB_CONN_STR, TOKEN_LIVE_TIME_S
+from settings import DB_CONN_STR, TOKEN_LIVE_TIME_S, UPLOAD_FOLDER
 import traceback
+from werkzeug.utils import secure_filename
+import os
 
 blueprint = flask.Blueprint('main_api', __name__,
                             template_folder='api_templates')
@@ -308,9 +310,24 @@ def get_articles():
         traceback.print_exc()
         return make_response(jsonify({'error': 'Something gone wrong'}), 400)
 
+@blueprint.route('/api/upload', methods=['POST'])
+def upload_file():
+    try:
+        if 'file' not in request.files:
+            return 'error'
+        file = request.files['file']
+        if file.filename == '':
+            return 'error'
+        filename = secure_filename(file.filename)
+        file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+        return "OK"
+    except Exception as e:
+        traceback.print_exc()
+
 
 if __name__ == '__main__':
     app = Flask(__name__)
+    app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
     app.register_blueprint(blueprint)
     db_session.global_init(DB_CONN_STR)
     app.run(host='0.0.0.0', port=5243, debug=True)
