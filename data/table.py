@@ -17,6 +17,7 @@ class User(SqlAlchemyBase, SerializerMixin):
     gender = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
     email = sqlalchemy.Column(sqlalchemy.String, unique=True, nullable=False)
     rate = sqlalchemy.Column(sqlalchemy.Integer, nullable=False, default=10)
+    is_admin = sqlalchemy.Column(sqlalchemy.Boolean, nullable=False, default=False)
     password_hash = sqlalchemy.Column(sqlalchemy.String, nullable=False)
     salt = sqlalchemy.Column(sqlalchemy.String, nullable=False)
     create_date = sqlalchemy.Column(sqlalchemy.Integer, nullable=False, default=int(time.time()))
