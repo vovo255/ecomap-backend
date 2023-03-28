@@ -428,7 +428,7 @@ def upload_file():
 @blueprint.route('/api/images/<image>', methods=['GET'])
 def download(image):
     directory = os.path.join(app.root_path, app.config['UPLOAD_FOLDER'])
-    return send_from_directory(directory=directory, filename=image)
+    return send_from_directory(directory=directory, path=image)
 
 
 if __name__ == '__main__':
