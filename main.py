@@ -21,14 +21,6 @@ def allowed_file(filename):
         filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
-@blueprint.before_request
-def handle_preflight():
-    if request.method == "OPTIONS":
-        res = Response()
-        res.headers['X-Content-Type-Options'] = '*'
-        return res
-
-
 @blueprint.route('/api/registration', methods=['POST'])
 def start_register():
     try:
@@ -403,6 +395,7 @@ def get_points():
 @blueprint.route('/api/images', methods=['POST', 'OPTIONS'])
 def upload_file():
     if request.method == "OPTIONS":
+        print("Fuck")
         res = Response()
         res.headers['X-Content-Type-Options'] = '*'
         return res
