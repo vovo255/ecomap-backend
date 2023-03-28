@@ -427,8 +427,24 @@ def upload_file():
 
 @blueprint.route('/api/images/<image>', methods=['GET'])
 def download(image):
+    token = request.headers['authorization']
+    session = db_session.create_session()
+    user = session.query(User).filter(User.token == token).first()
+
+    if user is None:
+        if user is None:
+            return make_response(jsonify({'error': 'Authorization failed'}), 403)
+
+    if user.expires_at < datetime.now().timestamp():
+        return make_response(jsonify({'error': 'Authorization failed'}), 403)
+
     directory = os.path.join(app.root_path, app.config['UPLOAD_FOLDER'])
-    return send_from_directory(directory=directory, path=image)
+
+    try:
+        return send_from_directory(directory=directory, path=image)
+    except Exception as e:
+        traceback.print_exc()
+        return make_response(jsonify({'error': 'Something gone wrong'}), 400)
 
 
 if __name__ == '__main__':
