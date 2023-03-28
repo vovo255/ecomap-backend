@@ -26,9 +26,10 @@ def allowed_file(filename):
 def handle_preflight():
     if request.method == "OPTIONS":
         res = Response()
-        #res.headers['X-Content-Type-Options'] = '*'
+        res.headers['X-Content-Type-Options'] = '*'
         res.headers['Access-Control-Allow-Origin'] = '*'
-        res.headers['Access-Control-Allow-Methods'] = 'POST'
+        res.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE'
+        res.headers['Access-Control-Allow-Headers'] = '*'
         return res
 
 
