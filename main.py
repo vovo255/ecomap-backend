@@ -409,6 +409,7 @@ def upload_file():
 if __name__ == '__main__':
     app = Flask(__name__)
     app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+    app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024
     app.register_blueprint(blueprint)
     db_session.global_init(DB_CONN_STR)
     app.run(host='0.0.0.0', port=5243, debug=True)
