@@ -392,8 +392,10 @@ def get_points():
         return make_response(jsonify({'error': 'Something gone wrong'}), 400)
 
 
-@blueprint.route('/api/images', methods=['POST'])
+@blueprint.route('/api/images', methods=['POST', 'OPTIONS'])
 def upload_file():
+    if request.method == 'OPTIONS':
+        return ''
     token = request.headers['authorization']
     session = db_session.create_session()
     user = session.query(User).filter(User.token == token).first()
@@ -427,8 +429,7 @@ def upload_file():
 
 @blueprint.route('/api/images/<image>', methods=['GET'])
 def download_file(image):
-    if request.method == 'OPTIONS':
-        return ''
+
     token = request.headers['authorization']
     session = db_session.create_session()
     user = session.query(User).filter(User.token == token).first()
