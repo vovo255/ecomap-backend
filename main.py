@@ -1,10 +1,12 @@
+import time
+
 import flask
 from flask import Flask, jsonify, request, make_response
 from data import db_session
 from datetime import datetime, timedelta, timezone
 from data.table import User, Article, Like, Point
 from user_help import check_password, make_password, generate_token
-from settings import DB_CONN_STR, TOKEN_LIVE_TIME_S, UPLOAD_FOLDER, ALLOWED_EXTENSIONS
+from settings import DB_CONN_STR, TOKEN_LIVE_TIME_S, UPLOAD_FOLDER, ALLOWED_EXTENSIONS, DOMEN
 import traceback
 from werkzeug.utils import secure_filename
 from json import dumps
@@ -392,16 +394,32 @@ def get_points():
 
 @blueprint.route('/api/upload', methods=['GET', 'POST'])
 def upload_file():
+    token = request.headers['authorization']
+    session = db_session.create_session()
+    user = session.query(User).filter(User.token == token).first()
+
+    if user is None:
+        if user is None:
+            return make_response(jsonify({'error': 'Authorization failed'}), 403)
+
+    if user.expires_at < datetime.now().timestamp():
+        return make_response(jsonify({'error': 'Authorization failed'}), 403)
     try:
         if 'file' not in request.files:
-            return 'error'
+            return make_response(jsonify({'error': 'Empty requset. File not found'}), 400)
         file = request.files['file']
         if file.filename == '':
-            return 'error'
+            return make_response(jsonify({'error': 'Empty filename.'}), 400)
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
+            filename = filename.split('.')
+            filename[0] = filename[0] + str(int(time.time()))
+            filename = '.'.join(filename)
             file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            return 'OK'
+            response = dict()
+            response['link'] = DOMEN + 'api/images/' + filename
+            return make_response(response, 200)
+        return make_response(jsonify({'error': 'Something gone wrong'}), 400)
     except Exception as e:
         traceback.print_exc()
 
