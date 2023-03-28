@@ -2,6 +2,7 @@ from requests import post, get
 from pprint import pprint
 from settings import DOMEN
 
+
 def test_registration():
     test_1_query = dict()
     test_1_query['name'] = 'Петя'
@@ -86,12 +87,43 @@ def test_get_articles(token):
     pprint(resp.json())
 
 
+def test_post_point(token):
+    test_6_query = dict()
+    test_6_query['title'] = 'Название, опциональное, может не надо будет'
+    test_6_query['iconImageHref'] = 'Строка-ссылка-на-изображение'
+    test_6_query['address'] = "Строка с адресом, сделать поле опциональным, потому что мб не надо будет"
+    test_6_query['pointX'] = 40.29
+    test_6_query['pointY'] = 40.29
+    test_6_query['type'] = 2
+    test_6_query['images'] = ["Массив с ссылками на изображения"]
+    test_6_query['comment'] = 'Комментарий'
+
+    headers = dict()
+    headers['authorization'] = token
+
+    resp = post(DOMEN + 'api/map', json=test_6_query, headers=headers)
+
+    print(resp.status_code)
+    pprint(resp.json())
+
+def test_get_points(token):
+    headers = dict()
+    headers['authorization'] = token
+
+    resp = get(DOMEN + 'api/map?type=1', headers=headers)
+
+    print(resp.status_code)
+    pprint(resp.json())
+
+
 if __name__ == '__main__':
     #test_registration()
     #test_login()
-    #test_post_article('7d3c7d21c652f4bd24a53d644915fe095081d5b82ad674d7f23b48a88c730bec')
-    #test_get_article('7d3c7d21c652f4bd24a53d644915fe095081d5b82ad674d7f23b48a88c730bec')
-    #test_like('7d3c7d21c652f4bd24a53d644915fe095081d5b82ad674d7f23b48a88c730bec')
-    #test_unlike('7d3c7d21c652f4bd24a53d644915fe095081d5b82ad674d7f23b48a88c730bec')
-    test_get_articles('7d3c7d21c652f4bd24a53d644915fe095081d5b82ad674d7f23b48a88c730bec')
-    test_get_articles('7d3c7d21c652f4bd24a53d644915fe095081d5b82ad674d7f23b48a88c730bec')
+    # test_post_article('7d3c7d21c652f4bd24a53d644915fe095081d5b82ad674d7f23b48a88c730bec')
+    # test_get_article('7d3c7d21c652f4bd24a53d644915fe095081d5b82ad674d7f23b48a88c730bec')
+    # test_like('7d3c7d21c652f4bd24a53d644915fe095081d5b82ad674d7f23b48a88c730bec')
+    # test_unlike('7d3c7d21c652f4bd24a53d644915fe095081d5b82ad674d7f23b48a88c730bec')
+    # test_get_articles('7d3c7d21c652f4bd24a53d644915fe095081d5b82ad674d7f23b48a88c730bec')
+    # test_get_articles('7d3c7d21c652f4bd24a53d644915fe095081d5b82ad674d7f23b48a88c730bec')
+    #test_post_point('863cbb3dc5e77537526abd30866836f09098e4f48b8bb8cf6dcc35e060171e1c')
+    test_get_points('863cbb3dc5e77537526abd30866836f09098e4f48b8bb8cf6dcc35e060171e1c')

@@ -4,6 +4,7 @@ import time
 from sqlalchemy import orm
 from sqlalchemy_serializer import SerializerMixin
 from datetime import datetime, timezone
+from json import loads
 
 
 class User(SqlAlchemyBase, SerializerMixin):
@@ -59,3 +60,23 @@ class Like(SqlAlchemyBase):
     liker = orm.relationship("User")
     liked_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('articles.id'))
     liked = orm.relationship("Article")
+
+
+class Point(SqlAlchemyBase, SerializerMixin):
+    __tablename__ = 'points'
+    id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True, autoincrement=True)
+    title = sqlalchemy.Column(sqlalchemy.String, nullable=False, default="")
+    icon = sqlalchemy.Column(sqlalchemy.String, nullable=False)
+    address = sqlalchemy.Column(sqlalchemy.String, nullable=False, default="")
+    pointX = sqlalchemy.Column(sqlalchemy.Float, nullable=False)
+    pointY = sqlalchemy.Column(sqlalchemy.Float, nullable=False)
+    _type = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
+    images = sqlalchemy.Column(sqlalchemy.String, nullable=False, default='[]')
+    comment = sqlalchemy.Column(sqlalchemy.String, nullable=False, default='')
+
+    def to_json(self):
+        point = self.to_dict(only=('title', 'icon', 'address', 'pointX', 'pointY', 'comment'))
+        point['iconImageHref'] = self.icon
+        point['type'] = self._type
+        point['images'] = loads(self.images)
+        return point
