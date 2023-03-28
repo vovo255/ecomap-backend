@@ -1,4 +1,4 @@
-from requests import post, get
+from requests import post, get, options
 from pprint import pprint
 from settings import DOMEN
 

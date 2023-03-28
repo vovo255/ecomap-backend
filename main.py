@@ -1,5 +1,5 @@
 import time
-from flask import send_from_directory
+from flask import send_from_directory, Response
 import flask
 from flask import Flask, jsonify, request, make_response
 from data import db_session
@@ -19,6 +19,14 @@ blueprint = flask.Blueprint('main_api', __name__,
 def allowed_file(filename):
     return '.' in filename and \
         filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+@blueprint.before_request
+def handle_preflight():
+    if request.method == "OPTIONS":
+        res = Response()
+        res.headers['X-Content-Type-Options'] = '*'
+        return res
 
 
 @blueprint.route('/api/registration', methods=['POST'])
@@ -394,8 +402,10 @@ def get_points():
 
 @blueprint.route('/api/images', methods=['POST', 'OPTIONS'])
 def upload_file():
-    if request.method == 'OPTIONS':
-        return ''
+    if request.method == "OPTIONS":
+        res = Response()
+        res.headers['X-Content-Type-Options'] = '*'
+        return res
     token = request.headers['authorization']
     session = db_session.create_session()
     user = session.query(User).filter(User.token == token).first()
@@ -429,7 +439,6 @@ def upload_file():
 
 @blueprint.route('/api/images/<image>', methods=['GET'])
 def download_file(image):
-
     token = request.headers['authorization']
     session = db_session.create_session()
     user = session.query(User).filter(User.token == token).first()
