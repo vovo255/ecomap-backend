@@ -1,3 +1,4 @@
+import json
 import time
 from flask import send_from_directory, Response
 import flask
@@ -354,9 +355,10 @@ def post_point():
         point.address = params['address']
         point.pointX = params['pointX']
         point.pointY = params['pointY']
-        point._type = params['type']
+        point.types = json.dumps(params['types'])
         point.images = dumps(params['images'])
         point.comment = params['comment']
+        point.user_id = user.id
         session.add(point)
         session.commit()
         session.close()
@@ -384,12 +386,18 @@ def get_points():
         if user.expires_at < datetime.now().timestamp():
             return make_response(jsonify({'error': 'Authorization failed'}), 403)
 
-        _type = params.get('type')
-        points = session.query(Point).filter(Point._type == _type).all()
+        types = params['types']
+        all_includes = params['allIncludes']
+        is_accepted = params['isAccepted']
+        points = session.query(Point).filter(Point.is_accepted == is_accepted).all()
+        if all_includes:
+            points_filtered = points
+        else:
+            points_filtered = filter(lambda x: len(set(json.loads(types)).intersection(set(x.types))) > 0, points)
         response = dict()
         response['points'] = []
 
-        for point in points:
+        for point in points_filtered:
             point: Point
             response['points'].append(point.to_json())
 

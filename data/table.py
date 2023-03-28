@@ -78,15 +78,15 @@ class Point(SqlAlchemyBase, SerializerMixin):
     address = sqlalchemy.Column(sqlalchemy.String, nullable=False, default="")
     pointX = sqlalchemy.Column(sqlalchemy.Float, nullable=False)
     pointY = sqlalchemy.Column(sqlalchemy.Float, nullable=False)
-    _type = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
+    types = sqlalchemy.Column(sqlalchemy.String, nullable=False, default='[]')
     images = sqlalchemy.Column(sqlalchemy.String, nullable=False, default='[]')
     comment = sqlalchemy.Column(sqlalchemy.String, nullable=False, default='')
+    is_accepted = sqlalchemy.Column(sqlalchemy.Boolean, nullable=False, default=False)
     user = orm.relationship("User")
     user_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('users.id'))
 
     def to_json(self):
-        point = self.to_dict(only=('title', 'icon', 'address', 'pointX', 'pointY', 'comment'))
+        point = self.to_dict(only=('title', 'icon', 'address', 'pointX', 'pointY', 'comment', 'types'))
         point['iconImageHref'] = self.icon
-        point['type'] = self._type
         point['images'] = loads(self.images)
         return point
