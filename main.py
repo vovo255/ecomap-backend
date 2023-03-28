@@ -413,6 +413,45 @@ def get_points():
         return make_response(jsonify({'error': 'Something gone wrong'}), 400)
 
 
+@blueprint.route('/api/map/<id>', methods=['PUT'])
+def post_point(id):
+    try:
+        params = request.json
+        token = request.headers['authorization']
+
+        session = db_session.create_session()
+        user = session.query(User).filter(User.token == token).first()
+
+        if user is None:
+            if user is None:
+                return make_response(jsonify({'error': 'Authorization failed'}), 403)
+
+        if user.expires_at < datetime.now().timestamp():
+            return make_response(jsonify({'error': 'Authorization failed'}), 403)
+
+        point = session.query(Point).filter(Point.id == id).first()
+
+        point.title = params['title']
+        point.icon = params['iconImageHref']
+        point.address = params['address']
+        point.pointX = params['pointX']
+        point.pointY = params['pointY']
+        point.types = json.dumps(params['types'])
+        point.images = dumps(params['images'])
+        point.comment = params['comment']
+        point.is_accepted = params['isAccepted'] == 'True'
+        point.user.rate += 15
+        session.commit()
+        session.close()
+        return make_response(jsonify({}), 200)
+
+    except KeyError:
+        return make_response(jsonify({'error': 'Missing argument'}), 400)
+    except Exception as e:
+        traceback.print_exc()
+        return make_response(jsonify({'error': 'Something gone wrong'}), 400)
+
+
 @blueprint.route('/api/images', methods=['POST'])
 def upload_file():
     token = request.headers['authorization']

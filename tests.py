@@ -5,12 +5,21 @@ from settings import DOMEN
 
 def test_registration():
     test_1_query = dict()
-    test_1_query['name'] = 'Админ'
-    test_1_query['surname'] = 'Админ'
+    # test_1_query['name'] = 'Админ'
+    # test_1_query['surname'] = 'Админ'
+    # test_1_query['age'] = 19
+    # test_1_query['nickname'] = 'admin'
+    # test_1_query['gender'] = 1
+    # test_1_query['email'] = 'admin@mail.ru'
+    # test_1_query['password'] = '123123'
+    # test_1_query['confirmPassword'] = '123123'
+
+    test_1_query['name'] = 'Владимир'
+    test_1_query['surname'] = 'Алексеев'
     test_1_query['age'] = 19
-    test_1_query['nickname'] = 'admin'
+    test_1_query['nickname'] = 'vovo255'
     test_1_query['gender'] = 1
-    test_1_query['email'] = 'admin@mail.ru'
+    test_1_query['email'] = 'it@vladimirva.ru'
     test_1_query['password'] = '123123'
     test_1_query['confirmPassword'] = '123123'
 
@@ -22,7 +31,10 @@ def test_registration():
 
 def test_login():
     test_2_query = dict()
-    test_2_query['email'] = 'admin@mail.ru'
+    # test_2_query['email'] = 'admin@mail.ru'
+    # test_2_query['password'] = '123123'
+
+    test_2_query['email'] = 'it@vladimirva.ru'
     test_2_query['password'] = '123123'
 
     resp = post(DOMEN + 'api/login', json=test_2_query)
@@ -99,12 +111,12 @@ def test_profile(token):
 
 def test_post_point(token):
     test_6_query = dict()
-    test_6_query['title'] = 'Название, опциональное, может не надо будет'
+    test_6_query['title'] = 'Точка 3'
     test_6_query['iconImageHref'] = 'Строка-ссылка-на-изображение'
     test_6_query['address'] = "Строка с адресом, сделать поле опциональным, потому что мб не надо будет"
     test_6_query['pointX'] = 40.29
     test_6_query['pointY'] = 40.29
-    test_6_query['type'] = 2
+    test_6_query['types'] = [1]
     test_6_query['images'] = ["Массив с ссылками на изображения"]
     test_6_query['comment'] = 'Комментарий'
 
@@ -121,7 +133,11 @@ def test_get_points(token):
     headers = dict()
     headers['authorization'] = token
 
-    resp = get(DOMEN + 'api/map?type=1', headers=headers)
+    params = dict()
+    params['types'] = '[1, 2, 3, 4]'
+    params['allIncludes'] = False
+    params['isAccepted'] = False
+    resp = get(DOMEN + 'api/map', headers=headers, params=params)
 
     print(resp.status_code)
     pprint(resp.json())
@@ -136,6 +152,6 @@ if __name__ == '__main__':
     # test_unlike('7d3c7d21c652f4bd24a53d644915fe095081d5b82ad674d7f23b48a88c730bec')
     # test_get_articles('7d3c7d21c652f4bd24a53d644915fe095081d5b82ad674d7f23b48a88c730bec')
     # test_get_articles('7d3c7d21c652f4bd24a53d644915fe095081d5b82ad674d7f23b48a88c730bec')
-    # test_post_point('863cbb3dc5e77537526abd30866836f09098e4f48b8bb8cf6dcc35e060171e1c')
-    # test_get_points('863cbb3dc5e77537526abd30866836f09098e4f48b8bb8cf6dcc35e060171e1c')
-    test_profile('19b21fc2289c914e200abdc99616ab1397861d2448707935042eb4ec5297b166')
+    #test_post_point('7141ec0c35c7778ff8bfbfd9cd9bca794f924445e014c759bc5cce8e381652cd')
+    test_get_points('7141ec0c35c7778ff8bfbfd9cd9bca794f924445e014c759bc5cce8e381652cd')
+    #test_profile('59204b340dc8b66d3ab392e48d859750a2eb4a6f6cf5c0d04a86377b70ce0a33')
