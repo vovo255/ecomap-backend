@@ -1,5 +1,5 @@
 import time
-
+from flask import send_from_directory
 import flask
 from flask import Flask, jsonify, request, make_response
 from data import db_session
@@ -422,6 +422,13 @@ def upload_file():
         return make_response(jsonify({'error': 'Something gone wrong'}), 400)
     except Exception as e:
         traceback.print_exc()
+        return make_response(jsonify({'error': 'Something gone wrong'}), 400)
+
+
+@blueprint.route('/api/images/<image>', methods=['GET'])
+def download(image):
+    directory = os.path.join(app.root_path, app.config['UPLOAD_FOLDER'])
+    return send_from_directory(directory=directory, filename=image)
 
 
 if __name__ == '__main__':

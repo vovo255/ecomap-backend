@@ -118,7 +118,7 @@ def test_get_points(token):
 
 if __name__ == '__main__':
     #test_registration()
-    #test_login()
+    test_login()
     # test_post_article('7d3c7d21c652f4bd24a53d644915fe095081d5b82ad674d7f23b48a88c730bec')
     # test_get_article('7d3c7d21c652f4bd24a53d644915fe095081d5b82ad674d7f23b48a88c730bec')
     # test_like('7d3c7d21c652f4bd24a53d644915fe095081d5b82ad674d7f23b48a88c730bec')
@@ -126,4 +126,4 @@ if __name__ == '__main__':
     # test_get_articles('7d3c7d21c652f4bd24a53d644915fe095081d5b82ad674d7f23b48a88c730bec')
     # test_get_articles('7d3c7d21c652f4bd24a53d644915fe095081d5b82ad674d7f23b48a88c730bec')
     #test_post_point('863cbb3dc5e77537526abd30866836f09098e4f48b8bb8cf6dcc35e060171e1c')
-    test_get_points('863cbb3dc5e77537526abd30866836f09098e4f48b8bb8cf6dcc35e060171e1c')
+    #test_get_points('863cbb3dc5e77537526abd30866836f09098e4f48b8bb8cf6dcc35e060171e1c')
