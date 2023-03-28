@@ -11,6 +11,7 @@ import traceback
 from werkzeug.utils import secure_filename
 from json import dumps
 import os
+from flask_cors import CORS
 
 blueprint = flask.Blueprint('main_api', __name__,
                             template_folder='api_templates')
@@ -19,6 +20,14 @@ blueprint = flask.Blueprint('main_api', __name__,
 def allowed_file(filename):
     return '.' in filename and \
         filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+@blueprint.before_request
+def handle_preflight():
+    if request.method == "OPTIONS":
+        res = Response()
+        res.headers['X-Content-Type-Options'] = '*'
+        return res
 
 
 @blueprint.route('/api/registration', methods=['POST'])
@@ -454,6 +463,7 @@ def download_file(image):
 
 if __name__ == '__main__':
     app = Flask(__name__)
+    CORS(app)
     app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
     app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024
     app.register_blueprint(blueprint)
