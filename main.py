@@ -448,7 +448,7 @@ def download_file(image):
 
 
 @blueprint.route('/api/profile', methods=['GET'])
-def get_points():
+def get_profile():
     try:
         params = request.args
         token = request.headers['authorization']
