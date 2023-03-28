@@ -82,6 +82,7 @@ class Point(SqlAlchemyBase, SerializerMixin):
     images = sqlalchemy.Column(sqlalchemy.String, nullable=False, default='[]')
     comment = sqlalchemy.Column(sqlalchemy.String, nullable=False, default='')
     user = orm.relationship("User")
+    user_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('users.id'))
 
     def to_json(self):
         point = self.to_dict(only=('title', 'icon', 'address', 'pointX', 'pointY', 'comment'))
