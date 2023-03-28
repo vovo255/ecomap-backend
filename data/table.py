@@ -27,7 +27,7 @@ class User(SqlAlchemyBase, SerializerMixin):
     likes = sqlalchemy.orm.relationship("Like", back_populates="liker")
 
     def to_json(self):
-        user_json = self.to_dict(only=('id', 'name', 'surname', 'age', 'nickname', 'gender'))
+        user_json = self.to_dict(only=('id', 'name', 'surname', 'age', 'nickname', 'gender', 'rate', 'is_admin', 'email'))
         return user_json
 
 

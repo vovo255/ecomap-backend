@@ -440,9 +440,42 @@ def upload_file():
 @blueprint.route('/api/images/<image>', methods=['GET'])
 def download_file(image):
     directory = os.path.join(app.root_path, app.config['UPLOAD_FOLDER'])
-
     try:
         return send_from_directory(directory=directory, path=image)
+    except Exception as e:
+        traceback.print_exc()
+        return make_response(jsonify({'error': 'Something gone wrong'}), 400)
+
+
+@blueprint.route('/api/profile', methods=['GET'])
+def get_points():
+    try:
+        params = request.args
+        token = request.headers['authorization']
+        session = db_session.create_session()
+        user = session.query(User).filter(User.token == token).first()
+
+        if user is None:
+            if user is None:
+                return make_response(jsonify({'error': 'Authorization failed'}), 403)
+
+        if user.expires_at < datetime.now().timestamp():
+            return make_response(jsonify({'error': 'Authorization failed'}), 403)
+
+        user_id = params.get('id', None)
+        if user_id is None:
+            user_id = user.id
+
+        user = session.query(User).filter(User.id == user_id).first()
+        if user is None:
+            return make_response(jsonify({'error': 'User not found'}), 404)
+
+        response = user.to_json()
+
+        return make_response(response, 200)
+
+    except KeyError:
+        return make_response(jsonify({'error': 'Missing argument'}), 400)
     except Exception as e:
         traceback.print_exc()
         return make_response(jsonify({'error': 'Something gone wrong'}), 400)
