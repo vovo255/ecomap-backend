@@ -4,12 +4,19 @@ from data import db_session
 from datetime import datetime, timedelta, timezone
 from data.table import User, Article, Like, Point
 from user_help import check_password, make_password, generate_token
-from settings import DB_CONN_STR, TOKEN_LIVE_TIME_S
+from settings import DB_CONN_STR, TOKEN_LIVE_TIME_S, UPLOAD_FOLDER, ALLOWED_EXTENSIONS
 import traceback
+from werkzeug.utils import secure_filename
 from json import dumps
+import os
 
 blueprint = flask.Blueprint('main_api', __name__,
                             template_folder='api_templates')
+
+
+def allowed_file(filename):
+    return '.' in filename and \
+        filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
 @blueprint.route('/api/registration', methods=['POST'])
@@ -383,8 +390,25 @@ def get_points():
         return make_response(jsonify({'error': 'Something gone wrong'}), 400)
 
 
+@blueprint.route('/', methods=['GET', 'POST'])
+def upload_file():
+    try:
+        if 'file' not in request.files:
+            return 'error'
+        file = request.files['file']
+        if file.filename == '':
+            return 'error'
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            return 'OK'
+    except Exception as e:
+        traceback.print_exc()
+
+
 if __name__ == '__main__':
     app = Flask(__name__)
+    app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
     app.register_blueprint(blueprint)
     db_session.global_init(DB_CONN_STR)
     app.run(host='0.0.0.0', port=5243, debug=True)
