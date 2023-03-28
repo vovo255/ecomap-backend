@@ -387,13 +387,14 @@ def get_points():
             return make_response(jsonify({'error': 'Authorization failed'}), 403)
 
         types = params['types']
-        all_includes = params['allIncludes']
-        is_accepted = params['isAccepted']
+        all_includes = params['allIncludes'] == 'True'
+        is_accepted = params['isAccepted'] == 'True'
         points = session.query(Point).filter(Point.is_accepted == is_accepted).all()
         if all_includes:
             points_filtered = points
         else:
-            points_filtered = filter(lambda x: len(set(json.loads(types)).intersection(set(x.types))) > 0, points)
+            points_filtered = filter(lambda x: len(set(json.loads(types)).intersection(set(json.loads(x.types)))) > 0,
+                                     points)
         response = dict()
         response['points'] = []
 
