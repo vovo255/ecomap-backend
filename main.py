@@ -392,7 +392,7 @@ def get_points():
         return make_response(jsonify({'error': 'Something gone wrong'}), 400)
 
 
-@blueprint.route('/api/upload', methods=['GET', 'POST'])
+@blueprint.route('/api/images', methods=['GET', 'POST'])
 def upload_file():
     token = request.headers['authorization']
     session = db_session.create_session()
