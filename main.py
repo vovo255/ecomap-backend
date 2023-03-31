@@ -387,8 +387,8 @@ def get_points():
             return make_response(jsonify({'error': 'Authorization failed'}), 403)
 
         types = params['types']
-        all_includes = params['allIncludes'] == 'True'
-        is_accepted = params['isAccepted'] == 'True'
+        all_includes = params['allIncludes'].lower() == 'true'
+        is_accepted = params['isAccepted'].lower() == 'true'
         points = session.query(Point).filter(Point.is_accepted == is_accepted).all()
         if all_includes:
             points_filtered = points
@@ -439,7 +439,7 @@ def put_point(id):
         point.types = json.dumps(params['types'])
         point.images = dumps(params['images'])
         point.comment = params['comment']
-        point.is_accepted = params['isAccepted'] == 'True'
+        point.is_accepted = params['isAccepted'].lower() == 'true'
         point.user.rate += 15
         session.commit()
         session.close()
