@@ -390,7 +390,9 @@ def get_points():
         is_accepted = params['isAccepted'].lower() == 'true'
         points = session.query(Point).filter(Point.is_accepted == is_accepted).all()
         if all_includes:
-            points_filtered = points
+            points_filtered = filter(
+                lambda x: len(set(json.loads(types)).intersection(set(json.loads(x.types)))) > len(json.loads(types)),
+                points)
         else:
             points_filtered = filter(lambda x: len(set(json.loads(types)).intersection(set(json.loads(x.types)))) > 0,
                                      points)
