@@ -391,7 +391,7 @@ def get_points():
         points = session.query(Point).filter(Point.is_accepted == is_accepted).all()
         if all_includes:
             points_filtered = filter(
-                lambda x: len(set(json.loads(types)).intersection(set(json.loads(x.types)))) > len(json.loads(types)),
+                lambda x: len(set(json.loads(types)).intersection(set(json.loads(x.types)))) >= len(json.loads(types)),
                 points)
         else:
             points_filtered = filter(lambda x: len(set(json.loads(types)).intersection(set(json.loads(x.types)))) > 0,
