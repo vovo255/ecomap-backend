@@ -177,16 +177,16 @@ def post_article():
 @blueprint.route('/api/article/<article_id>', methods=['GET'])
 def get_article(article_id):
     try:
-        token = request.headers['authorization']
         session = db_session.create_session()
-        user = session.query(User).filter(User.token == token).first()
-
-        if user is None:
-            if user is None:
-                return make_response(jsonify({'error': 'Authorization failed'}), 403)
-
-        if user.expires_at < datetime.now().timestamp():
-            return make_response(jsonify({'error': 'Authorization failed'}), 403)
+        # token = request.headers['authorization']
+        # user = session.query(User).filter(User.token == token).first()
+        #
+        # if user is None:
+        #     if user is None:
+        #         return make_response(jsonify({'error': 'Authorization failed'}), 403)
+        #
+        # if user.expires_at < datetime.now().timestamp():
+        #     return make_response(jsonify({'error': 'Authorization failed'}), 403)
 
         article = session.query(Article).filter(Article.id == article_id).first()
         if article is None:
@@ -280,17 +280,16 @@ def unlike_article(article_id):
 def get_articles():
     try:
         params = request.args
-        token = request.headers['authorization']
-
         session = db_session.create_session()
-        user = session.query(User).filter(User.token == token).first()
-
-        if user is None:
-            if user is None:
-                return make_response(jsonify({'error': 'Authorization failed'}), 403)
-
-        if user.expires_at < datetime.now().timestamp():
-            return make_response(jsonify({'error': 'Authorization failed'}), 403)
+        # token = request.headers['authorization']
+        # user = session.query(User).filter(User.token == token).first()
+        #
+        # if user is None:
+        #     if user is None:
+        #         return make_response(jsonify({'error': 'Authorization failed'}), 403)
+        #
+        # if user.expires_at < datetime.now().timestamp():
+        #     return make_response(jsonify({'error': 'Authorization failed'}), 403)
 
         page = int(params.get('page'))
         limit = int(params.get('limit'))
@@ -375,16 +374,16 @@ def post_point():
 def get_points():
     try:
         params = request.args
-        token = request.headers['authorization']
         session = db_session.create_session()
-        user = session.query(User).filter(User.token == token).first()
-
-        if user is None:
-            if user is None:
-                return make_response(jsonify({'error': 'Authorization failed'}), 403)
-
-        if user.expires_at < datetime.now().timestamp():
-            return make_response(jsonify({'error': 'Authorization failed'}), 403)
+        # token = request.headers['authorization']
+        # user = session.query(User).filter(User.token == token).first()
+        #
+        # if user is None:
+        #     if user is None:
+        #         return make_response(jsonify({'error': 'Authorization failed'}), 403)
+        #
+        # if user.expires_at < datetime.now().timestamp():
+        #     return make_response(jsonify({'error': 'Authorization failed'}), 403)
 
         types = params['types']
         all_includes = params['allIncludes'].lower() == 'true'
