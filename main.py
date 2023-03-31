@@ -432,6 +432,9 @@ def put_point(id):
 
         point = session.query(Point).filter(Point.id == id).first()
 
+        if point is None:
+            return make_response(jsonify({'error': 'Point not found'}), 404)
+
         point.title = params['title']
         point.icon = params['iconImageHref']
         point.address = params['address']
@@ -442,6 +445,38 @@ def put_point(id):
         point.comment = params['comment']
         point.is_accepted = params['isAccepted'].lower() == 'true'
         point.user.rate += 15
+        session.commit()
+        session.close()
+        return make_response(jsonify({}), 200)
+
+    except KeyError:
+        return make_response(jsonify({'error': 'Missing argument'}), 400)
+    except Exception as e:
+        traceback.print_exc()
+        return make_response(jsonify({'error': 'Something gone wrong'}), 400)
+
+
+@blueprint.route('/api/map/<id>', methods=['DELETE'])
+def delete_point(id):
+    try:
+        token = request.headers['authorization']
+
+        session = db_session.create_session()
+        user = session.query(User).filter(User.token == token).first()
+
+        if user is None:
+            if user is None:
+                return make_response(jsonify({'error': 'Authorization failed'}), 403)
+
+        if user.expires_at < datetime.now().timestamp():
+            return make_response(jsonify({'error': 'Authorization failed'}), 403)
+
+        point = session.query(Point).filter(Point.id == id).first()
+
+        if point is None:
+            return make_response(jsonify({'error': 'Point not found'}), 404)
+
+        session.delete(point)
         session.commit()
         session.close()
         return make_response(jsonify({}), 200)
