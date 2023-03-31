@@ -5,23 +5,23 @@ from settings import DOMEN
 
 def test_registration():
     test_1_query = dict()
-    # test_1_query['name'] = 'Админ'
-    # test_1_query['surname'] = 'Админ'
-    # test_1_query['age'] = 19
-    # test_1_query['nickname'] = 'admin'
-    # test_1_query['gender'] = 1
-    # test_1_query['email'] = 'admin@mail.ru'
-    # test_1_query['password'] = '123123'
-    # test_1_query['confirmPassword'] = '123123'
-
-    test_1_query['name'] = 'Владимир'
-    test_1_query['surname'] = 'Алексеев'
+    test_1_query['name'] = 'Админ'
+    test_1_query['surname'] = 'Админ'
     test_1_query['age'] = 19
-    test_1_query['nickname'] = 'vovo255'
+    test_1_query['nickname'] = 'admin'
     test_1_query['gender'] = 1
-    test_1_query['email'] = 'it@vladimirva.ru'
+    test_1_query['email'] = 'admin@mail.ru'
     test_1_query['password'] = '123123'
     test_1_query['confirmPassword'] = '123123'
+
+    # test_1_query['name'] = 'Владимир'
+    # test_1_query['surname'] = 'Алексеев'
+    # test_1_query['age'] = 19
+    # test_1_query['nickname'] = 'vovo255'
+    # test_1_query['gender'] = 1
+    # test_1_query['email'] = 'it@vladimirva.ru'
+    # test_1_query['password'] = '123123'
+    # test_1_query['confirmPassword'] = '123123'
 
     resp = post(DOMEN + 'api/registration', json=test_1_query)
 
@@ -144,14 +144,14 @@ def test_get_points(token):
 
 
 if __name__ == '__main__':
-    #test_registration()
-    #test_login()
+    test_registration()
+    # test_login()
     # test_post_article('7d3c7d21c652f4bd24a53d644915fe095081d5b82ad674d7f23b48a88c730bec')
     # test_get_article('7d3c7d21c652f4bd24a53d644915fe095081d5b82ad674d7f23b48a88c730bec')
     # test_like('7d3c7d21c652f4bd24a53d644915fe095081d5b82ad674d7f23b48a88c730bec')
     # test_unlike('7d3c7d21c652f4bd24a53d644915fe095081d5b82ad674d7f23b48a88c730bec')
     # test_get_articles('7d3c7d21c652f4bd24a53d644915fe095081d5b82ad674d7f23b48a88c730bec')
     # test_get_articles('7d3c7d21c652f4bd24a53d644915fe095081d5b82ad674d7f23b48a88c730bec')
-    #test_post_point('7141ec0c35c7778ff8bfbfd9cd9bca794f924445e014c759bc5cce8e381652cd')
-    test_get_points('7141ec0c35c7778ff8bfbfd9cd9bca794f924445e014c759bc5cce8e381652cd')
-    #test_profile('59204b340dc8b66d3ab392e48d859750a2eb4a6f6cf5c0d04a86377b70ce0a33')
+    # test_post_point('7141ec0c35c7778ff8bfbfd9cd9bca794f924445e014c759bc5cce8e381652cd')
+    # test_get_points('7141ec0c35c7778ff8bfbfd9cd9bca794f924445e014c759bc5cce8e381652cd')
+    # test_profile('d0d3ae15dcc228318ee490ca462011aa21b58ea0562cfd10bb43ba02132e7425')

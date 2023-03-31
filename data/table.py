@@ -86,7 +86,7 @@ class Point(SqlAlchemyBase, SerializerMixin):
     user_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('users.id'))
 
     def to_json(self):
-        point = self.to_dict(only=('title', 'icon', 'address', 'pointX', 'pointY', 'comment', 'types'))
+        point = self.to_dict(only=('title', 'icon', 'address', 'pointX', 'pointY', 'comment', 'types', 'id'))
         point['iconImageHref'] = self.icon
         point['images'] = loads(self.images)
         return point
