@@ -354,7 +354,7 @@ def post_point():
         point.address = params['address']
         point.pointX = params['pointX']
         point.pointY = params['pointY']
-        point.types = json.dumps(params['types'])
+        point.types = params['types']
         point.images = dumps(params['images'])
         point.comment = params['comment']
         point.user_id = user.id
@@ -435,16 +435,15 @@ def put_point(id):
         if point is None:
             return make_response(jsonify({'error': 'Point not found'}), 404)
 
-        print(params)
         point.title = params['title']
         point.icon = params['iconImageHref']
         point.address = params['address']
         point.pointX = params['pointX']
         point.pointY = params['pointY']
-        point.types = json.dumps(params['types'])
+        point.types = params['types']
         point.images = dumps(params['images'])
         point.comment = params['comment']
-        point.is_accepted = params['isAccepted'].lower() == 'true'
+        point.is_accepted = params['isAccepted']
         point.user.rate += 15
         session.commit()
         session.close()
