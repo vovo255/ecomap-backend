@@ -435,6 +435,7 @@ def put_point(id):
         if point is None:
             return make_response(jsonify({'error': 'Point not found'}), 404)
 
+        print(params)
         point.title = params['title']
         point.icon = params['iconImageHref']
         point.address = params['address']
