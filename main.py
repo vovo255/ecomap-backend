@@ -529,6 +529,49 @@ def get_profile():
         return make_response(jsonify({'error': 'Something gone wrong'}), 400)
 
 
+@blueprint.route('/api/profile', methods=['PUT'])
+def get_profile():
+    try:
+        params = request.args
+        token = request.headers['authorization']
+        session = db_session.create_session()
+        user = session.query(User).filter(User.token == token).first()
+
+        if user is None:
+            if user is None:
+                return make_response(jsonify({'error': 'Authorization failed'}), 403)
+
+        if user.expires_at < datetime.now().timestamp():
+            return make_response(jsonify({'error': 'Authorization failed'}), 403)
+
+        if 'name' in params:
+            user.name = params['name']
+        if 'age' in params:
+            user.age = params['age']
+        if 'surname' in params:
+            user.surname = params['surname']
+        if 'nickname' in params:
+            user.nickname = params['nickname']
+        if 'gender' in params:
+            user.gender = params['gender']
+        if 'email' in params:
+            user.email = params['email']
+        if 'avatar' in params:
+            user.avatar = params['avatar']
+
+        session.commit()
+        response = user.to_json()
+        session.close()
+        return make_response(response, 200)
+
+    except KeyError:
+        session.close()
+        return make_response(jsonify({'error': 'Missing argument'}), 400)
+    except Exception:
+        session.close()
+        return make_response(jsonify({'error': 'Something gone wrong'}), 400)
+
+
 if __name__ == '__main__':
     app = Flask(__name__)
     CORS(app)
