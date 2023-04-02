@@ -115,9 +115,9 @@ def start_login():
         session.close()
         return make_response(jsonify({'error': 'Missing argument'
                                       }), 400)
-    session.close()
     except Exception:
-    return make_response(jsonify({'error': 'Something gone wrong'}), 400)
+        session.close()
+        return make_response(jsonify({'error': 'Something gone wrong'}), 400)
 
 
 @blueprint.route('/api/article', methods=['POST'])
