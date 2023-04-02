@@ -26,10 +26,11 @@ class User(SqlAlchemyBase, SerializerMixin):
     articles = sqlalchemy.orm.relationship("Article", back_populates="author")
     points = sqlalchemy.orm.relationship("Point", back_populates="user")
     likes = sqlalchemy.orm.relationship("Like", back_populates="liker")
+    avatar = sqlalchemy.Column(sqlalchemy.String, nullable=True)
 
     def to_json(self):
         user_json = self.to_dict(
-            only=('id', 'name', 'surname', 'age', 'nickname', 'gender', 'rate', 'is_admin', 'email'))
+            only=('id', 'name', 'surname', 'age', 'nickname', 'gender', 'rate', 'is_admin', 'email', 'profile'))
         user_json['points'] = []
         for point in self.points:
             point: Point
