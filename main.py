@@ -572,11 +572,11 @@ def put_profile():
         return make_response(jsonify({'error': 'Something gone wrong'}), 400)
 
 
-if __name__ == '__main__':
-    app = Flask(__name__)
-    CORS(app)
-    app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-    app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024
-    app.register_blueprint(blueprint)
-    db_session.global_init(DB_CONN_STR)
+app = Flask(__name__)
+CORS(app)
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024
+app.register_blueprint(blueprint)
+db_session.global_init(DB_CONN_STR)
+if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5243, debug=True)
