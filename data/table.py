@@ -30,7 +30,7 @@ class User(SqlAlchemyBase, SerializerMixin):
 
     def to_json(self):
         user_json = self.to_dict(
-            only=('id', 'name', 'surname', 'age', 'nickname', 'gender', 'rate', 'is_admin', 'email', 'profile'))
+            only=('id', 'name', 'surname', 'age', 'nickname', 'gender', 'rate', 'is_admin', 'email', 'avatar'))
         user_json['points'] = []
         for point in self.points:
             point: Point
