@@ -530,7 +530,7 @@ def get_profile():
 
 
 @blueprint.route('/api/profile', methods=['PUT'])
-def get_profile():
+def put_profile():
     try:
         params = request.args
         token = request.headers['authorization']
