@@ -75,13 +75,12 @@ def start_register():
         response['token'] = new_user.token
         response['expiresIn'] = new_user.expires_at
         session.close()
-
         return make_response(response, 201)
-
     except KeyError:
+        session.close()
         return make_response(jsonify({'error': 'Missing argument'}), 400)
-    except Exception as e:
-        traceback.print_exc()
+    except Exception:
+        session.close()
         return make_response(jsonify({'error': 'Something gone wrong'}), 400)
 
 
@@ -111,14 +110,14 @@ def start_login():
         response['token'] = exist_user.token
         response['expiresIn'] = expires_at.astimezone().isoformat()
         session.close()
-
         return make_response(response, 200)
-
     except KeyError:
+        session.close()
         return make_response(jsonify({'error': 'Missing argument'
                                       }), 400)
-    except Exception as e:
-        return make_response(jsonify({'error': 'Something gone wrong'}), 400)
+    session.close()
+    except Exception:
+    return make_response(jsonify({'error': 'Something gone wrong'}), 400)
 
 
 @blueprint.route('/api/article', methods=['POST'])
@@ -162,15 +161,13 @@ def post_article():
         response['image'] = article.image
         response['template'] = article.template
         response['author'] = user.to_json()
-        print(article.to_json())
         session.close()
-
         return make_response(response, 200)
-
     except KeyError:
+        session.close()
         return make_response(jsonify({'error': 'Missing argument'}), 400)
-    except Exception as e:
-        traceback.print_exc()
+    except Exception:
+        session.close()
         return make_response(jsonify({'error': 'Something gone wrong'}), 400)
 
 
@@ -178,16 +175,6 @@ def post_article():
 def get_article(article_id):
     try:
         session = db_session.create_session()
-        # token = request.headers['authorization']
-        # user = session.query(User).filter(User.token == token).first()
-        #
-        # if user is None:
-        #     if user is None:
-        #         return make_response(jsonify({'error': 'Authorization failed'}), 403)
-        #
-        # if user.expires_at < datetime.now().timestamp():
-        #     return make_response(jsonify({'error': 'Authorization failed'}), 403)
-
         article = session.query(Article).filter(Article.id == article_id).first()
         if article is None:
             return make_response(jsonify({'error': 'Article does not exist'}), 404)
@@ -195,11 +182,11 @@ def get_article(article_id):
         response = article.to_json()
         session.close()
         return make_response(response, 200)
-
     except KeyError:
+        session.close()
         return make_response(jsonify({'error': 'Missing argument'}), 400)
-    except Exception as e:
-        traceback.print_exc()
+    except Exception:
+        session.close()
         return make_response(jsonify({'error': 'Something gone wrong'}), 400)
 
 
@@ -233,12 +220,12 @@ def like_article(article_id):
         session.add(like)
         session.commit()
         session.close()
-
         return make_response(jsonify({}), 200)
     except KeyError:
+        session.close()
         return make_response(jsonify({'error': 'Missing argument'}), 400)
-    except Exception as e:
-        traceback.print_exc()
+    except Exception:
+        session.close()
         return make_response(jsonify({'error': 'Something gone wrong'}), 400)
 
 
@@ -267,12 +254,12 @@ def unlike_article(article_id):
         session.delete(like)
         session.commit()
         session.close()
-
         return make_response(jsonify({}), 200)
     except KeyError:
+        session.close()
         return make_response(jsonify({'error': 'Missing argument'}), 400)
-    except Exception as e:
-        traceback.print_exc()
+    except Exception:
+        session.close()
         return make_response(jsonify({'error': 'Something gone wrong'}), 400)
 
 
@@ -281,16 +268,6 @@ def get_articles():
     try:
         params = request.args
         session = db_session.create_session()
-        # token = request.headers['authorization']
-        # user = session.query(User).filter(User.token == token).first()
-        #
-        # if user is None:
-        #     if user is None:
-        #         return make_response(jsonify({'error': 'Authorization failed'}), 403)
-        #
-        # if user.expires_at < datetime.now().timestamp():
-        #     return make_response(jsonify({'error': 'Authorization failed'}), 403)
-
         page = int(params.get('page'))
         limit = int(params.get('limit'))
         search = params.get('search')
@@ -300,12 +277,11 @@ def get_articles():
         else:
             articles = list(session.query(Article).filter(Article.title == search).all())
 
-        articles_perf = list()
         response = dict()
         total = len(articles)
 
         response['currentPage'] = page
-        response['lastPage'] = total // limit  # + (1 if total - total // limit > 0 else 0) TODO: Wtf?
+        response['lastPage'] = total // limit
         response['perPage'] = limit
         response['data'] = []
 
@@ -321,13 +297,13 @@ def get_articles():
             response['data'].append(article.get_short_desc())
 
         response['total'] = len(response['data'])
-
+        session.close()
         return make_response(response, 200)
 
     except KeyError:
+        session.close()
         return make_response(jsonify({'error': 'Missing argument'}), 400)
-    except Exception as e:
-        traceback.print_exc()
+    except Exception:
         return make_response(jsonify({'error': 'Something gone wrong'}), 400)
 
 
@@ -335,9 +311,8 @@ def get_articles():
 def post_point():
     try:
         params = request.json
-        token = request.headers['authorization']
-
         session = db_session.create_session()
+        token = request.headers['authorization']
         user = session.query(User).filter(User.token == token).first()
 
         if user is None:
@@ -364,9 +339,10 @@ def post_point():
         return make_response(jsonify({}), 200)
 
     except KeyError:
+        session.close()
         return make_response(jsonify({'error': 'Missing argument'}), 400)
-    except Exception as e:
-        traceback.print_exc()
+    except Exception:
+        session.close()
         return make_response(jsonify({'error': 'Something gone wrong'}), 400)
 
 
@@ -375,26 +351,17 @@ def get_points():
     try:
         params = request.args
         session = db_session.create_session()
-        # token = request.headers['authorization']
-        # user = session.query(User).filter(User.token == token).first()
-        #
-        # if user is None:
-        #     if user is None:
-        #         return make_response(jsonify({'error': 'Authorization failed'}), 403)
-        #
-        # if user.expires_at < datetime.now().timestamp():
-        #     return make_response(jsonify({'error': 'Authorization failed'}), 403)
-
         types = params['types']
         all_includes = params['allIncludes'].lower() == 'true'
         is_accepted = params['isAccepted'].lower() == 'true'
         points = session.query(Point).filter(Point.is_accepted == is_accepted).all()
+        types = json.loads(types)
         if all_includes:
             points_filtered = filter(
-                lambda x: len(set(json.loads(types)).intersection(set(json.loads(x.types)))) >= len(json.loads(types)),
+                lambda x: len(set(types).intersection(set(json.loads(x.types)))) >= len(types) > 0,
                 points)
         else:
-            points_filtered = filter(lambda x: len(set(json.loads(types)).intersection(set(json.loads(x.types)))) > 0,
+            points_filtered = filter(lambda x: len(set(types).intersection(set(json.loads(x.types)))) > 0,
                                      points)
         response = dict()
         response['points'] = []
@@ -404,13 +371,12 @@ def get_points():
             response['points'].append(point.to_json())
 
         session.close()
-
         return make_response(response, 200)
-
     except KeyError:
+        session.close()
         return make_response(jsonify({'error': 'Missing argument'}), 400)
-    except Exception as e:
-        traceback.print_exc()
+    except Exception:
+        session.close()
         return make_response(jsonify({'error': 'Something gone wrong'}), 400)
 
 
@@ -418,8 +384,8 @@ def get_points():
 def put_point(id):
     try:
         params = request.json
+        session = db_session.create_session()
         token = request.headers['authorization']
-
         session = db_session.create_session()
         user = session.query(User).filter(User.token == token).first()
 
@@ -448,20 +414,19 @@ def put_point(id):
         session.commit()
         session.close()
         return make_response(jsonify({}), 200)
-
     except KeyError:
+        session.close()
         return make_response(jsonify({'error': 'Missing argument'}), 400)
-    except Exception as e:
-        traceback.print_exc()
+    except Exception:
+        session.close()
         return make_response(jsonify({'error': 'Something gone wrong'}), 400)
 
 
 @blueprint.route('/api/map/<id>', methods=['DELETE'])
 def delete_point(id):
     try:
-        token = request.headers['authorization']
-
         session = db_session.create_session()
+        token = request.headers['authorization']
         user = session.query(User).filter(User.token == token).first()
 
         if user is None:
@@ -480,26 +445,29 @@ def delete_point(id):
         session.commit()
         session.close()
         return make_response(jsonify({}), 200)
-
     except KeyError:
+        session.close()
         return make_response(jsonify({'error': 'Missing argument'}), 400)
-    except Exception as e:
-        traceback.print_exc()
+    except Exception:
+        session.close()
         return make_response(jsonify({'error': 'Something gone wrong'}), 400)
 
 
 @blueprint.route('/api/images', methods=['POST'])
 def upload_file():
-    token = request.headers['authorization']
     session = db_session.create_session()
+    token = request.headers['authorization']
     user = session.query(User).filter(User.token == token).first()
 
     if user is None:
         if user is None:
+            session.close()
             return make_response(jsonify({'error': 'Authorization failed'}), 403)
 
     if user.expires_at < datetime.now().timestamp():
+        session.close()
         return make_response(jsonify({'error': 'Authorization failed'}), 403)
+    session.close()
     try:
         if 'file' not in request.files:
             return make_response(jsonify({'error': 'Empty requset. File not found'}), 400)
@@ -516,8 +484,7 @@ def upload_file():
             response['link'] = DOMEN + 'api/images/' + filename
             return make_response(response, 200)
         return make_response(jsonify({'error': 'Something gone wrong'}), 400)
-    except Exception as e:
-        traceback.print_exc()
+    except Exception:
         return make_response(jsonify({'error': 'Something gone wrong'}), 400)
 
 
@@ -526,8 +493,7 @@ def download_file(image):
     directory = os.path.join(app.root_path, app.config['UPLOAD_FOLDER'])
     try:
         return send_from_directory(directory=directory, path=image)
-    except Exception as e:
-        traceback.print_exc()
+    except Exception:
         return make_response(jsonify({'error': 'Something gone wrong'}), 400)
 
 
@@ -555,13 +521,11 @@ def get_profile():
             return make_response(jsonify({'error': 'User not found'}), 404)
 
         response = user.to_json()
-
         return make_response(response, 200)
 
     except KeyError:
         return make_response(jsonify({'error': 'Missing argument'}), 400)
-    except Exception as e:
-        traceback.print_exc()
+    except Exception:
         return make_response(jsonify({'error': 'Something gone wrong'}), 400)
 
 
