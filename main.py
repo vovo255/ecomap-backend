@@ -130,8 +130,7 @@ def post_article():
         user = session.query(User).filter(User.token == token).first()
 
         if user is None:
-            if user is None:
-                return make_response(jsonify({'error': 'Authorization failed'}), 403)
+            return make_response(jsonify({'error': 'Authorization failed'}), 403)
 
         if user.expires_at < datetime.now().timestamp():
             return make_response(jsonify({'error': 'Authorization failed'}), 403)
@@ -175,11 +174,19 @@ def post_article():
 def get_article(article_id):
     try:
         session = db_session.create_session()
+        token = request.headers['authorization']
+        user = session.query(User).filter(User.token == token).first()
         article = session.query(Article).filter(Article.id == article_id).first()
+
+        if user is None:
+            user.id = -1
+
         if article is None:
             return make_response(jsonify({'error': 'Article does not exist'}), 404)
 
         response = article.to_json()
+        response['is_liked'] = user.id in response['user_liked']
+
         session.close()
         return make_response(response, 200)
     except KeyError:
@@ -198,8 +205,7 @@ def like_article(article_id):
         user = session.query(User).filter(User.token == token).first()
 
         if user is None:
-            if user is None:
-                return make_response(jsonify({'error': 'Authorization failed'}), 403)
+            return make_response(jsonify({'error': 'Authorization failed'}), 403)
 
         if user.expires_at < datetime.now().timestamp():
             return make_response(jsonify({'error': 'Authorization failed'}), 403)
@@ -237,8 +243,7 @@ def unlike_article(article_id):
         user = session.query(User).filter(User.token == token).first()
 
         if user is None:
-            if user is None:
-                return make_response(jsonify({'error': 'Authorization failed'}), 403)
+            return make_response(jsonify({'error': 'Authorization failed'}), 403)
 
         if user.expires_at < datetime.now().timestamp():
             return make_response(jsonify({'error': 'Authorization failed'}), 403)
@@ -271,6 +276,10 @@ def get_articles():
         page = int(params.get('page'))
         limit = int(params.get('limit'))
         search = params.get('search')
+        token = request.headers['authorization']
+        user = session.query(User).filter(User.token == token).first()
+        if user is None:
+            user.id = -1
 
         if search is None:
             articles = list(session.query(Article).all())
@@ -295,6 +304,7 @@ def get_articles():
         for article in articles_perf:
             article: Article
             response['data'].append(article.get_short_desc())
+            response['data']['is_liked'] = user.id in response['data']['user_liked']
 
         response['total'] = len(response['data'])
         session.close()
@@ -316,8 +326,7 @@ def post_point():
         user = session.query(User).filter(User.token == token).first()
 
         if user is None:
-            if user is None:
-                return make_response(jsonify({'error': 'Authorization failed'}), 403)
+            return make_response(jsonify({'error': 'Authorization failed'}), 403)
 
         if user.expires_at < datetime.now().timestamp():
             return make_response(jsonify({'error': 'Authorization failed'}), 403)
@@ -390,8 +399,7 @@ def put_point(id):
         user = session.query(User).filter(User.token == token).first()
 
         if user is None:
-            if user is None:
-                return make_response(jsonify({'error': 'Authorization failed'}), 403)
+            return make_response(jsonify({'error': 'Authorization failed'}), 403)
 
         if user.expires_at < datetime.now().timestamp():
             return make_response(jsonify({'error': 'Authorization failed'}), 403)
@@ -430,8 +438,7 @@ def delete_point(id):
         user = session.query(User).filter(User.token == token).first()
 
         if user is None:
-            if user is None:
-                return make_response(jsonify({'error': 'Authorization failed'}), 403)
+            return make_response(jsonify({'error': 'Authorization failed'}), 403)
 
         if user.expires_at < datetime.now().timestamp():
             return make_response(jsonify({'error': 'Authorization failed'}), 403)
@@ -460,9 +467,8 @@ def upload_file():
     user = session.query(User).filter(User.token == token).first()
 
     if user is None:
-        if user is None:
-            session.close()
-            return make_response(jsonify({'error': 'Authorization failed'}), 403)
+        session.close()
+        return make_response(jsonify({'error': 'Authorization failed'}), 403)
 
     if user.expires_at < datetime.now().timestamp():
         session.close()
@@ -506,8 +512,7 @@ def get_profile():
         user = session.query(User).filter(User.token == token).first()
 
         if user is None:
-            if user is None:
-                return make_response(jsonify({'error': 'Authorization failed'}), 403)
+            return make_response(jsonify({'error': 'Authorization failed'}), 403)
 
         if user.expires_at < datetime.now().timestamp():
             return make_response(jsonify({'error': 'Authorization failed'}), 403)
@@ -538,8 +543,7 @@ def put_profile():
         user = session.query(User).filter(User.token == token).first()
 
         if user is None:
-            if user is None:
-                return make_response(jsonify({'error': 'Authorization failed'}), 403)
+            return make_response(jsonify({'error': 'Authorization failed'}), 403)
 
         if user.expires_at < datetime.now().timestamp():
             return make_response(jsonify({'error': 'Authorization failed'}), 403)

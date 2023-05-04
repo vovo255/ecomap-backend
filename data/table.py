@@ -54,11 +54,19 @@ class Article(SqlAlchemyBase, SerializerMixin):
         article = self.to_dict(only=('id', 'title', 'content', 'image', 'template'))
         article['author'] = self.author.to_json()
         article['date'] = datetime.fromtimestamp(self.date, timezone.utc).astimezone().isoformat()
+        user_liked = []
+        for like in self.likes:
+            user_liked.append(like.liker_id)
+        article['user_liked'] = user_liked
         return article
 
     def get_short_desc(self):
         article = self.to_dict(only=('id', 'image', 'title'))
         article['countOfLikes'] = len(self.likes)
+        user_liked = []
+        for like in self.likes:
+            user_liked.append(like.liker_id)
+        article['user_liked'] = user_liked
         return article
 
 
