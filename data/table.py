@@ -26,6 +26,7 @@ class User(SqlAlchemyBase, SerializerMixin):
     articles = sqlalchemy.orm.relationship("Article", back_populates="author")
     points = sqlalchemy.orm.relationship("Point", back_populates="user")
     likes = sqlalchemy.orm.relationship("Like", back_populates="liker")
+    favorites = sqlalchemy.orm.relationship("Favorite", back_populates="fav_user")
     avatar = sqlalchemy.Column(sqlalchemy.String, nullable=True)
 
     def to_json(self):
@@ -63,10 +64,10 @@ class Article(SqlAlchemyBase, SerializerMixin):
     def get_short_desc(self):
         article = self.to_dict(only=('id', 'image', 'title'))
         article['countOfLikes'] = len(self.likes)
-        user_liked = []
+        users_liked = []
         for like in self.likes:
-            user_liked.append(like.liker_id)
-        article['user_liked'] = user_liked
+            users_liked.append(like.liker_id)
+        article['user_liked'] = users_liked
         return article
 
 
@@ -77,6 +78,15 @@ class Like(SqlAlchemyBase):
     liker = orm.relationship("User")
     liked_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('articles.id'))
     liked = orm.relationship("Article")
+
+
+class Favorite(SqlAlchemyBase):
+    __tablename__ = 'Favorites'
+    id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True, autoincrement=True)
+    fav_user_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('users.id'))
+    fav_user = orm.relationship("User")
+    fav_point_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('points.id'))
+    fav_point = orm.relationship("Point")
 
 
 class Point(SqlAlchemyBase, SerializerMixin):
@@ -93,6 +103,7 @@ class Point(SqlAlchemyBase, SerializerMixin):
     is_accepted = sqlalchemy.Column(sqlalchemy.Boolean, nullable=False, default=False)
     user = orm.relationship("User")
     user_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('users.id'))
+    favorites = sqlalchemy.orm.relationship("Favorite", back_populates="fav_point")
 
     def to_json(self):
         point = self.to_dict(only=('title', 'icon', 'address', 'pointX', 'pointY', 'comment', 'types', 'id'))

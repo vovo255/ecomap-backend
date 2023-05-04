@@ -5,7 +5,7 @@ import flask
 from flask import Flask, jsonify, request, make_response
 from data import db_session
 from datetime import datetime, timedelta, timezone
-from data.table import User, Article, Like, Point
+from data.table import User, Article, Like, Point, Favorite
 from user_help import check_password, make_password, generate_token
 from settings import DB_CONN_STR, TOKEN_LIVE_TIME_S, UPLOAD_FOLDER, ALLOWED_EXTENSIONS, DOMEN
 import traceback
@@ -303,8 +303,63 @@ def get_articles():
         articles_perf = articles[(page - 1) * limit: page * limit]
         for article in articles_perf:
             article: Article
-            response['data'].append(article.get_short_desc())
-            response['data']['is_liked'] = user.id in response['data']['user_liked']
+            temp = article.get_short_desc()
+            temp['is_liked'] = user.id in temp['user_liked']
+            response['data'].append(temp)
+
+        response['total'] = len(response['data'])
+        session.close()
+        return make_response(response, 200)
+
+    except KeyError:
+        session.close()
+        return make_response(jsonify({'error': 'Missing argument'}), 400)
+    except Exception:
+        return make_response(jsonify({'error': 'Something gone wrong'}), 400)
+
+
+@blueprint.route('/api/profile/liked', methods=['GET'])
+def get_liked_articles():
+    try:
+        params = request.args
+        session = db_session.create_session()
+        page = int(params.get('page'))
+        limit = int(params.get('limit'))
+        search = params.get('search')
+        token = request.headers['authorization']
+        user = session.query(User).filter(User.token == token).first()
+
+        if user is None:
+            return make_response(jsonify({'error': 'Authorization failed'}), 403)
+
+        if user.expires_at < datetime.now().timestamp():
+            return make_response(jsonify({'error': 'Authorization failed'}), 403)
+        if search is None:
+            articles = list(session.query(Article).all())
+        else:
+            articles = list(session.query(Article).filter(Article.title == search).all())
+
+        response = dict()
+        total = len(articles)
+
+        response['currentPage'] = page
+        response['lastPage'] = total // limit
+        response['perPage'] = limit
+        response['data'] = []
+
+        if len(articles) <= (page - 1) * limit:
+            response['data'] = []
+            response['total'] = 0
+            session.close()
+            return make_response(response, 200)
+
+        articles_perf = articles[(page - 1) * limit: page * limit]
+        for article in articles_perf:
+            article: Article
+            temp = article.get_short_desc()
+            if user.id in temp['user_liked']:
+                temp['is_liked'] = True
+                response['data'].append(temp)
 
         response['total'] = len(response['data'])
         session.close()
@@ -389,6 +444,64 @@ def get_points():
         return make_response(jsonify({'error': 'Something gone wrong'}), 400)
 
 
+@blueprint.route('/api/profile/favs', methods=['GET'])
+def get_favorite_points():
+    try:
+        params = request.args
+        session = db_session.create_session()
+        page = int(params.get('page'))
+        limit = int(params.get('limit'))
+        search = params.get('search')
+        token = request.headers['authorization']
+        user = session.query(User).filter(User.token == token).first()
+
+        types = params['types']
+        all_includes = params['allIncludes'].lower() == 'true'
+        is_accepted = params['isAccepted'].lower() == 'true'
+        if search is None:
+            points = session.query(Point).filter(Point.is_accepted == is_accepted).all()
+        else:
+            points = session.query(Point).filter(Point.is_accepted == is_accepted, Point.title == search).all()
+
+        types = json.loads(types)
+        if all_includes:
+            points_filtered = filter(
+                lambda x: len(set(types).intersection(set(json.loads(x.types)))) >= len(types) > 0,
+                points)
+        else:
+            points_filtered = filter(lambda x: len(set(types).intersection(set(json.loads(x.types)))) > 0,
+                                     points)
+
+        total = len(points_filtered)
+
+        response = dict()
+        response['currentPage'] = page
+        response['lastPage'] = total // limit
+        response['perPage'] = limit
+        response['points'] = []
+
+        if total <= (page - 1) * limit:
+            response['total'] = 0
+            session.close()
+            return make_response(response, 200)
+
+        points_perf = points_filtered[(page - 1) * limit: page * limit]
+        for point in points_perf:
+            point: Point
+            for favorite in user.favorites:
+                if favorite.fav_point_id == point.id:
+                    response['points'].append(point.to_json())
+
+        session.close()
+        return make_response(response, 200)
+    except KeyError:
+        session.close()
+        return make_response(jsonify({'error': 'Missing argument'}), 400)
+    except Exception:
+        session.close()
+        return make_response(jsonify({'error': 'Something gone wrong'}), 400)
+
+
 @blueprint.route('/api/map/<id>', methods=['PUT'])
 def put_point(id):
     try:
@@ -449,6 +562,77 @@ def delete_point(id):
             return make_response(jsonify({'error': 'Point not found'}), 404)
 
         session.delete(point)
+        session.commit()
+        session.close()
+        return make_response(jsonify({}), 200)
+    except KeyError:
+        session.close()
+        return make_response(jsonify({'error': 'Missing argument'}), 400)
+    except Exception:
+        session.close()
+        return make_response(jsonify({'error': 'Something gone wrong'}), 400)
+
+
+@blueprint.route('/api/map/fav/<point_id>', methods=['GET'])
+def set_favorite_point(point_id):
+    try:
+        token = request.headers['authorization']
+        session = db_session.create_session()
+        user = session.query(User).filter(User.token == token).first()
+
+        if user is None:
+            return make_response(jsonify({'error': 'Authorization failed'}), 403)
+
+        if user.expires_at < datetime.now().timestamp():
+            return make_response(jsonify({'error': 'Authorization failed'}), 403)
+
+        point = session.query(Point).filter(Point.id == point_id).first()
+        if point is None:
+            return make_response(jsonify({'error': 'Point does not exist'}), 404)
+
+        favorite = session.query(Favorite).filter(Favorite.fav_user == user, Favorite.fav_point == point).first()
+        if favorite is not None:
+            return make_response(jsonify({'error': 'Already set to favorite'}), 400)
+
+        favorite = Favorite()
+        favorite.fav_user = user
+        favorite.fav_point = point
+        favorite.fav_point_id = point.id
+        favorite.fav_user_id = user.id
+        session.add(favorite)
+        session.commit()
+        session.close()
+        return make_response(jsonify({}), 200)
+    except KeyError:
+        session.close()
+        return make_response(jsonify({'error': 'Missing argument'}), 400)
+    except Exception:
+        session.close()
+        return make_response(jsonify({'error': 'Something gone wrong'}), 400)
+
+
+@blueprint.route('/api/map/unfav/<point_id>', methods=['GET'])
+def unset_favorite_point(point_id):
+    try:
+        token = request.headers['authorization']
+        session = db_session.create_session()
+        user = session.query(User).filter(User.token == token).first()
+
+        if user is None:
+            return make_response(jsonify({'error': 'Authorization failed'}), 403)
+
+        if user.expires_at < datetime.now().timestamp():
+            return make_response(jsonify({'error': 'Authorization failed'}), 403)
+
+        point = session.query(Point).filter(Point.id == point_id).first()
+        if point is None:
+            return make_response(jsonify({'error': 'Point does not exist'}), 404)
+
+        favorite = session.query(Favorite).filter(Favorite.fav_user == user, Favorite.fav_point == point).first()
+        if favorite is None:
+            return make_response(jsonify({'error': 'Already removed from favorite'}), 400)
+
+        session.delete(favorite)
         session.commit()
         session.close()
         return make_response(jsonify({}), 200)
