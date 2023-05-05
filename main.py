@@ -174,7 +174,7 @@ def post_article():
 def get_article(article_id):
     try:
         session = db_session.create_session()
-        token = request.headers['authorization']
+        token = request.headers.get('authorization')
         user = session.query(User).filter(User.token == token).first()
         article = session.query(Article).filter(Article.id == article_id).first()
 
@@ -278,7 +278,7 @@ def get_articles():
         page = int(params.get('page'))
         limit = int(params.get('limit'))
         search = params.get('search')
-        token = request.headers['authorization']
+        token = request.headers.get('authorization')
         user = session.query(User).filter(User.token == token).first()
         if user is None:
             user_id = -1
