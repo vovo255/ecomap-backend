@@ -179,13 +179,15 @@ def get_article(article_id):
         article = session.query(Article).filter(Article.id == article_id).first()
 
         if user is None:
-            user.id = -1
+            user_id = -1
+        else:
+            user_id = user.id
 
         if article is None:
             return make_response(jsonify({'error': 'Article does not exist'}), 404)
 
         response = article.to_json()
-        response['is_liked'] = user.id in response['user_liked']
+        response['is_liked'] = user_id in response['user_liked']
 
         session.close()
         return make_response(response, 200)
@@ -279,7 +281,9 @@ def get_articles():
         token = request.headers['authorization']
         user = session.query(User).filter(User.token == token).first()
         if user is None:
-            user.id = -1
+            user_id = -1
+        else:
+            user_id = user.id
 
         if search is None:
             articles = list(session.query(Article).all())
@@ -304,7 +308,7 @@ def get_articles():
         for article in articles_perf:
             article: Article
             temp = article.get_short_desc()
-            temp['is_liked'] = user.id in temp['user_liked']
+            temp['is_liked'] = user_id in temp['user_liked']
             response['data'].append(temp)
 
         response['total'] = len(response['data'])
