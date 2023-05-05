@@ -718,6 +718,34 @@ def get_profile():
         return make_response(jsonify({'error': 'Something gone wrong'}), 400)
 
 
+@blueprint.route('/api/profile/<user_id>', methods=['GET'])
+def get_profile_by_id(user_id):
+    try:
+        params = request.args
+        token = request.headers['authorization']
+        session = db_session.create_session()
+        user = session.query(User).filter(User.token == token).first()
+
+        if user is None:
+            return make_response(jsonify({'error': 'Authorization failed'}), 403)
+
+        if user.expires_at < datetime.now().timestamp():
+            return make_response(jsonify({'error': 'Authorization failed'}), 403)
+
+        user = session.query(User).filter(User.id == user_id).first()
+
+        if(user == None):
+            return make_response(jsonify({'error': 'User not found'}), 404)
+        
+        response = user.to_json()
+        return make_response(response, 200)
+
+    except KeyError:
+        return make_response(jsonify({'error': 'Missing argument'}), 400)
+    except Exception:
+        return make_response(jsonify({'error': 'Something went wrong'}), 400)
+
+
 @blueprint.route('/api/profile', methods=['PUT'])
 def put_profile():
     try:
