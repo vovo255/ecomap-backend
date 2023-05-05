@@ -317,6 +317,40 @@ def get_articles():
     except Exception:
         return make_response(jsonify({'error': 'Something gone wrong'}), 400)
 
+@blueprint.route('/api/article/<article_id>', methods=['DELETE'])
+def delete_article(article_id):
+    try:
+        params = request.args
+        session = db_session.create_session()
+        token = request.headers['authorization']
+        user = session.query(User).filter(User.token == token).first()
+
+        if user is None:
+            return make_response(jsonify({'error': 'Authorizatino faile'}), 403)
+        
+        if user.expires_at < datetime.now().timestamp():
+            return make_response(jsonify({'error': 'Authorization failed'}), 403)
+
+        if not user.is_admin:
+            return make_response(jsonify({'error': 'Access is denied'}), 403)
+
+        article = session.query(Article).filter(Article.id == atricle_id).first()
+
+        if article is None:
+            return make_response(jsonify({'error': "Article is not exist"}), 404)
+        
+        session.delete(article)
+        session.commit()
+        session.close()
+        return make_response(200)
+    except KeyError:
+        session.close()
+        return make_response(jsonify({'error': 'Missing argument'}), 400)
+    except Exception:
+        return make_response(jsonify({'error': 'Something went wrong'}), 400)
+    
+        
+
 
 @blueprint.route('/api/profile/liked', methods=['GET'])
 def get_liked_articles():
