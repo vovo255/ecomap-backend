@@ -27,6 +27,8 @@ class User(SqlAlchemyBase, SerializerMixin):
     points = sqlalchemy.orm.relationship("Point", back_populates="user")
     likes = sqlalchemy.orm.relationship("Like", back_populates="liker")
     favorites = sqlalchemy.orm.relationship("Favorite", back_populates="fav_user")
+    subscribers = sqlalchemy.orm.relationship("Subscribe", back_populates="subscribed_to_user")
+    subscribed_to = sqlalchemy.orm.relationship("Subscribe", back_populates="subscriber_user")
     avatar = sqlalchemy.Column(sqlalchemy.String, nullable=True)
 
     def to_json(self):
@@ -87,6 +89,15 @@ class Favorite(SqlAlchemyBase):
     fav_user = orm.relationship("User")
     fav_point_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('points.id'))
     fav_point = orm.relationship("Point")
+
+
+class Subscribe(SqlAlchemyBase):
+    __tablename__ = 'Subscribes'
+    id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True, autoincrement=True)
+    subscribed_to_user_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('users.id'))
+    subscribed_to_user = orm.relationship("User")
+    subscriber_user_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('users.id'))
+    subscriber_user = orm.relationship("User")
 
 
 class Point(SqlAlchemyBase, SerializerMixin):

@@ -5,7 +5,7 @@ import flask
 from flask import Flask, jsonify, request, make_response
 from data import db_session
 from datetime import datetime, timedelta, timezone
-from data.table import User, Article, Like, Point, Favorite
+from data.table import User, Article, Like, Point, Favorite, Subscribe
 from user_help import check_password, make_password, generate_token
 from settings import DB_CONN_STR, TOKEN_LIVE_TIME_S, UPLOAD_FOLDER, ALLOWED_EXTENSIONS, DOMEN
 import traceback
@@ -321,6 +321,7 @@ def get_articles():
     except Exception:
         return make_response(jsonify({'error': 'Something gone wrong'}), 400)
 
+
 @blueprint.route('/api/article/<article_id>', methods=['DELETE'])
 def delete_article(article_id):
     try:
@@ -354,8 +355,6 @@ def delete_article(article_id):
         return make_response(jsonify({'error': 'Something went wrong'}), 400)
     
         
-
-
 @blueprint.route('/api/profile/liked', methods=['GET'])
 def get_liked_articles():
     try:
@@ -818,6 +817,45 @@ def put_profile():
         session.close()
         return make_response(response, 200)
 
+    except KeyError:
+        session.close()
+        return make_response(jsonify({'error': 'Missing argument'}), 400)
+    except Exception:
+        session.close()
+        return make_response(jsonify({'error': 'Something gone wrong'}), 400)
+
+
+@blueprint.route('/api/profile/subscribe/<user_id>/', methods=['POST'])
+def subscribe_to_user(user_id):
+    try:
+        token = request.headers['authorization']
+        session = db_session.create_session()
+        user = session.query(User).filter(User.token == token).first()
+
+        if user is None:
+            return make_response(jsonify({'error': 'Authorization failed'}), 403)
+
+        if user.expires_at < datetime.now().timestamp():
+            return make_response(jsonify({'error': 'Authorization failed'}), 403)
+
+        user_to_subscribe = session.query(User).filter(User.id == int(user_id)).first()
+        if user_to_subscribe is None:
+            return make_response(jsonify({'error': 'User to subscribe does not exist'}), 404)
+
+        subscription = session.query(Subscribe).filter(Subscribe.subscribed_to_user == user_to_subscribe,
+                                                       Subscribe.subscriber_user == user).first()
+        if subscription is not None:
+            return make_response(jsonify({'error': 'Already subscribed'}), 400)
+
+        subscribe = Subscribe()
+        subscribe.subscriber_user = user
+        subscribe.subscriber_user_id = user.id
+        subscribe.subscribed_to_user = user_to_subscribe
+        subscribe.subscribed_to_user_id = user_to_subscribe.id
+        session.add(subscribe)
+        session.commit()
+        session.close()
+        return make_response(jsonify({}), 200)
     except KeyError:
         session.close()
         return make_response(jsonify({'error': 'Missing argument'}), 400)
