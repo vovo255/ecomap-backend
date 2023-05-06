@@ -64,9 +64,9 @@ class Article(SqlAlchemyBase, SerializerMixin):
     def get_short_desc(self):
         article = self.to_dict(only=('id', 'image', 'title'))
         article['countOfLikes'] = len(self.likes)
-        users_liked = []
+        users_liked = {}
         for like in self.likes:
-            users_liked.append(like.liker_id)
+            users_liked[like.liker_id] = [like.liker.name, like.liker.surname, like.liker.avatar]
         article['user_liked'] = users_liked
         return article
 
