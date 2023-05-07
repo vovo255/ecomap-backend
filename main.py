@@ -591,7 +591,7 @@ def put_point(id):
         notification.user_id = creator.id
         notification.date = datetime.now().timestamp()
         notification.notification_type = 'accept'
-        notification.point = point
+        notification.obj_id = creator.id
 
         point.title = params['title']
         point.icon = params['iconImageHref']
@@ -644,9 +644,9 @@ def delete_point(id):
         notification.user_id = creator.id
         notification.date = datetime.now().timestamp()
         notification.notification_type = 'decline'
-        notification.point = point
-        notification.user = None
-        
+        notification.obj_id = point.id
+
+
         session.add(notification)
         session.delete(point)
         session.commit()
@@ -901,8 +901,7 @@ def subscribe_to_user(user_id):
         notification.user_id = user_to_subscribe.id
         notification.date = datetime.now().timestamp()
         notification.notification_type = 'subscribe'
-        notification.user = user
-        notification.poing = None
+        notification.obj_id = user.id
 
 
         subscribe = Subscribe()
@@ -973,9 +972,9 @@ def get_notification():
             session.close()
             return make_response(jsonify({'error': 'Authorization failde'}), 403)
         
-        notifications = list(session.query(Notification).filter(notification.user_token == token).all())
+        notifications = list(session.query(Notification).filter(notification.user_id == user.id).all())
 
-        if notifications is None:
+        if notifications.count == 0:
             session.close()
             return make_response(jsonify({'error': 'Notifications not found'}), 404)
         notification = notifications[-1]
@@ -985,9 +984,11 @@ def get_notification():
         response['date'] = datetime.fromtimestamp(notification.date)
         response['type'] = notification.notification_type
         if notification.notification_type == 'subscribe':
-            response['data'] = notification.user.to_json()
+            sub_user = session.query(User).filter(User.id == notification.obj_id).first()
+            response['data'] = sub_user.to_json()
         else:
-            response['data'] = notification.point.to_json()
+            point = session.query(Point).filter(Point.id == notification.obj_id).first()
+            response['data'] = point.to_json()
         
         session.delete(notification)
         session.commit()

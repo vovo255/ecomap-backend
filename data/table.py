@@ -129,8 +129,4 @@ class Notification(SqlAlchemyBase):
     user_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('users.id'))
     date = sqlalchemy.Column(sqlalchemy.Integer, nullable=False, default=int(time.time()))
     notification_type = sqlalchemy.Column(sqlalchemy.String, nullable=False)
-    user = orm.relationship('User')
-    point = orm.relationship('Point')
-
-
-    
+    obj_id = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
