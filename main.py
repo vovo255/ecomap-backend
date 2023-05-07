@@ -288,7 +288,7 @@ def get_articles():
         if search is None:
             articles = list(session.query(Article).all())
         else:
-            articles = list(session.query(Article).filter(Article.title == search).all())
+            articles = list(session.query(Article).filter(Article.title.ilike(f"%{search}%")).all())
 
         response = dict()
         total = len(articles)
@@ -470,6 +470,26 @@ def get_points():
         for point in points_filtered:
             point: Point
             response['points'].append(point.to_json())
+
+        session.close()
+        return make_response(response, 200)
+    except KeyError:
+        session.close()
+        return make_response(jsonify({'error': 'Missing argument'}), 400)
+    except Exception:
+        session.close()
+        return make_response(jsonify({'error': 'Something gone wrong'}), 400)
+
+
+@blueprint.route('/api/map/<point_id>/', methods=['GET'])
+def get_point(point_id):
+    try:
+        params = request.args
+        session = db_session.create_session()
+        is_accepted = params['isAccepted'].lower() == 'true'
+        point = session.query(Point).filter(Point.is_accepted == is_accepted, Point.id == int(point_id)).first()
+
+        response = point.to_json()
 
         session.close()
         return make_response(response, 200)
