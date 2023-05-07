@@ -877,14 +877,18 @@ def get_subscriptions():
         if user.expires_at < datetime.now().timestamp():
             return make_response(jsonify({'error': 'Authorization failed'}), 403)
 
-        subscriptions = list(session.query(Subscribe).filter(Subscribe.subscriber_user_id == user.id).all())
+        subscriptions = session.query(Subscribe).filter(Subscribe.subscriber_user == user).all()
+
+        if subscriptions is None:
+            return make_response(jsonify({'error': 'Nobody subscribed'}), 403)
 
         response = dict()
         response['users'] = []
 
-        for user in subscriptions:
-            user: User
-            response['users'].append(user.to_json())
+        for sub in subscriptions:
+            sub_user = sub.subscribed_to_user
+            sub_user: User
+            response['users'].append(sub_user.to_json())
 
         session.close()
         return make_response(response, 200)
@@ -894,8 +898,6 @@ def get_subscriptions():
         return make_response(jsonify({'error': 'Missing argument'}), 400)
     except Exception:
         return make_response(jsonify({'error': 'Something gone wrong'}), 400)
-
-
 
 
 app = Flask(__name__)
