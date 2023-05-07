@@ -5,7 +5,7 @@ import flask
 from flask import Flask, jsonify, request, make_response
 from data import db_session
 from datetime import datetime, timedelta, timezone
-from data.table import User, Article, Like, Point, Favorite, Subscribe
+from data.table import User, Article, Like, Point, Favorite, Subscribe, Notification
 from user_help import check_password, make_password, generate_token
 from settings import DB_CONN_STR, TOKEN_LIVE_TIME_S, UPLOAD_FOLDER, ALLOWED_EXTENSIONS, DOMEN
 import traceback
@@ -552,11 +552,24 @@ def put_point(id):
 
         if user.expires_at < datetime.now().timestamp():
             return make_response(jsonify({'error': 'Authorization failed'}), 403)
+        
+        if not user.is_admin:
+            return make_response(jsonify({'error': 'Access denied'}), 403)
 
         point = session.query(Point).filter(Point.id == id).first()
 
         if point is None:
             return make_response(jsonify({'error': 'Point not found'}), 404)
+        
+        creator = session.query(User).filter(User.id == point.user_id).first()
+        if creator is None:
+            creator = user
+        
+        notification = Notification()
+        notification.user_id = creator.id
+        notification.date = datetime.now().timestamp()
+        notification.notification_type = 'accept'
+        notification.point = point
 
         point.title = params['title']
         point.icon = params['iconImageHref']
@@ -566,8 +579,9 @@ def put_point(id):
         point.types = params['types']
         point.images = dumps(params['images'])
         point.comment = params['comment']
-        point.is_accepted = params['isAccepted']
+        point.is_accepted = True
         point.user.rate += 15
+        session.add(notification)
         session.commit()
         session.close()
         return make_response(jsonify({}), 200)
@@ -592,11 +606,26 @@ def delete_point(id):
         if user.expires_at < datetime.now().timestamp():
             return make_response(jsonify({'error': 'Authorization failed'}), 403)
 
+        if not user.is_admin:
+            return make_response(jsonify({'error': 'Access denied'}), 403)
+        
         point = session.query(Point).filter(Point.id == id).first()
 
         if point is None:
             return make_response(jsonify({'error': 'Point not found'}), 404)
+        
+        creator = session.query(User).filter(User.id == point.user_id).first()
+        if creator is None:
+            creator = user
 
+        notification = Notification()
+        notification.user_id = creator.id
+        notification.date = datetime.now().timestamp()
+        notification.notification_type = 'decline'
+        notification.point = point
+        notification.user = None
+        
+        session.add(notification)
         session.delete(point)
         session.commit()
         session.close()
@@ -845,8 +874,13 @@ def subscribe_to_user(user_id):
                                                        Subscribe.subscriber_user == user).first()
         if subscription is not None:
             return make_response(jsonify({'error': 'Already subscribed'}), 400)
-        notification = Notification()
         
+        notification = Notification()
+        notification.user_id = user_to_subscribe.id
+        notification.date = datetime.now().timestamp()
+        notification.notification_type = 'subscribe'
+        notification.user = user
+        notification.poing = None
 
 
         subscribe = Subscribe()
@@ -855,6 +889,7 @@ def subscribe_to_user(user_id):
         subscribe.subscribed_to_user = user_to_subscribe
         subscribe.subscribed_to_user_id = user_to_subscribe.id
         session.add(subscribe)
+        session.add(notification)
         session.commit()
         session.close()
         return make_response(jsonify({}), 200)
@@ -1020,6 +1055,7 @@ def get_notification():
             response['data'] = notification.point.to_json()
         
         session.delete(notification)
+        session.commit()
         session.close()
         return make_response(response, 200)
     except KeyError:
