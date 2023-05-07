@@ -288,7 +288,7 @@ def get_articles():
         if search is None:
             articles = list(session.query(Article).all())
         else:
-            articles = list(session.query(Article).filter(Article.title == search).all())
+            articles = list(session.query(Article).filter(Article.title.ilike(f"%{search}%")).all())
 
         response = dict()
         total = len(articles)
@@ -332,18 +332,18 @@ def delete_article(article_id):
 
         if user is None:
             return make_response(jsonify({'error': 'Authorizatino faile'}), 403)
-        
+
         if user.expires_at < datetime.now().timestamp():
             return make_response(jsonify({'error': 'Authorization failed'}), 403)
 
         if not user.is_admin:
             return make_response(jsonify({'error': 'Access is denied'}), 403)
 
-        article = session.query(Article).filter(Article.id == atricle_id).first()
+        article = session.query(Article).filter(Article.id == article_id).first()
 
         if article is None:
             return make_response(jsonify({'error': "Article is not exist"}), 404)
-        
+
         session.delete(article)
         session.commit()
         session.close()
@@ -353,8 +353,8 @@ def delete_article(article_id):
         return make_response(jsonify({'error': 'Missing argument'}), 400)
     except Exception:
         return make_response(jsonify({'error': 'Something went wrong'}), 400)
-    
-        
+
+
 @blueprint.route('/api/profile/liked', methods=['GET'])
 def get_liked_articles():
     try:
@@ -470,6 +470,28 @@ def get_points():
         for point in points_filtered:
             point: Point
             response['points'].append(point.to_json())
+
+        session.close()
+        return make_response(response, 200)
+    except KeyError:
+        session.close()
+        return make_response(jsonify({'error': 'Missing argument'}), 400)
+    except Exception:
+        session.close()
+        return make_response(jsonify({'error': 'Something gone wrong'}), 400)
+
+
+@blueprint.route('/api/map/<point_id>/', methods=['GET'])
+def get_point(point_id):
+    try:
+        params = request.args
+        session = db_session.create_session()
+        is_accepted = params['isAccepted'].lower() == 'true'
+        point = session.query(Point).filter(Point.is_accepted == is_accepted, Point.id == int(point_id)).first()
+        if point is None:
+            return make_response(jsonify({'error': 'Point not found'}), 403)
+
+        response = point.to_json()
 
         session.close()
         return make_response(response, 200)
@@ -799,9 +821,9 @@ def get_profile_by_id(user_id):
 
         user = session.query(User).filter(User.id == user_id).first()
 
-        if(user == None):
+        if (user == None):
             return make_response(jsonify({'error': 'User not found'}), 404)
-        
+
         response = user.to_json()
         return make_response(response, 200)
 
@@ -914,105 +936,18 @@ def get_subscriptions():
         if user.expires_at < datetime.now().timestamp():
             return make_response(jsonify({'error': 'Authorization failed'}), 403)
 
-        subscriptions = list(session.query(Subscribe).filter(Subscribe.subscriber_user == user).all())
+        subscriptions = session.query(Subscribe).filter(Subscribe.subscriber_user == user).all()
+
+        if subscriptions is None:
+            return make_response(jsonify({'error': 'Nobody subscribed'}), 403)
 
         response = dict()
         response['users'] = []
 
-        for user in subscriptions:
-            user: User
-            response['users'].append(user.to_json())
-
-        session.close()
-        return make_response(response, 200)
-
-    except KeyError:
-        session.close()
-        return make_response(jsonify({'error': 'Missing argument'}), 400)
-    except Exception:
-        return make_response(jsonify({'error': 'Something gone wrong'}), 400)
-
-
-@blueprint.route('/api/profile/subscribe/<user_id>/', methods=['GET'])
-def get_subscriptions(user_id):
-    try:
-        session = db_session.create_session()
-        user = session.query(User).filter(User.id == user_id).first()
-
-        if user is None:
-            return make_response(jsonify({'error': 'User not found'}), 403)
-
-        if user.expires_at < datetime.now().timestamp():
-            return make_response(jsonify({'error': 'Authorization failed'}), 403)
-
-        subscriptions = list(session.query(Subscribe).filter(Subscribe.subscriber_user == user).all())
-
-        response = dict()
-        response['users'] = []
-
-        for user in subscriptions:
-            user: User
-            response['users'].append(user.to_json())
-
-        session.close()
-        return make_response(response, 200)
-
-    except KeyError:
-        session.close()
-        return make_response(jsonify({'error': 'Missing argument'}), 400)
-    except Exception:
-        return make_response(jsonify({'error': 'Something gone wrong'}), 400)
-
-
-@blueprint.route('/api/profile/subscribers', methods=['GET'])
-def get_subscribers():
-    try:
-        session = db_session.create_session()
-        token = request.headers['authorization']
-        user = session.query(User).filter(User.token == token).first()
-
-        if user is None:
-            return make_response(jsonify({'error': 'Authorization failed'}), 403)
-
-        if user.expires_at < datetime.now().timestamp():
-            return make_response(jsonify({'error': 'Authorization failed'}), 403)
-
-        subscribers = list(session.query(Subscribe).filter(Subscribe.subscribed_to_user == user).all())
-
-        response = dict()
-        response['users'] = []
-
-        for user in subscribers:
-            user: User
-            response['users'].append(user.to_json())
-
-        session.close()
-        return make_response(response, 200)
-
-    except KeyError:
-        session.close()
-        return make_response(jsonify({'error': 'Missing argument'}), 400)
-    except Exception:
-        return make_response(jsonify({'error': 'Something gone wrong'}), 400)
-
-
-@blueprint.route('/api/profile/subscribers/<user_id>/', methods=['GET'])
-def get_subscribers(user_id):
-    try:
-        session = db_session.create_session()
-        user = session.query(User).filter(User.id == user_id).first()
-
-        if user is None:
-            return make_response(jsonify({'error': 'User not found'}), 403)
-
-        subscribers = list(session.query(Subscribe).filter(Subscribe.subscribed_to_user == user).all())
-
-        response = dict()
-        response['users'] = []
-
-        for user in subscribers:
-            user: User
-            response['users'].append(user.to_json())
+        for sub in subscriptions:
+            sub_user = sub.subscribed_to_user
+            sub_user: User
+            response['users'].append(sub_user.to_json())
 
         session.close()
         return make_response(response, 200)
