@@ -121,3 +121,16 @@ class Point(SqlAlchemyBase, SerializerMixin):
         point['iconImageHref'] = self.icon
         point['images'] = loads(self.images)
         return point
+    
+
+class Notification(SqlAlchemyBase):
+    __tablename__ = 'notifications'
+    id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True ,autoincrement=True)
+    user_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('users.id'))
+    date = sqlalchemy.Column(sqlalchemy.Integer, nullable=False, default=int(time.time()))
+    notification_type = sqlalchemy.Column(sqlalchemy.String, nullable=False)
+    user = orm.relationship('User')
+    point = orm.relationship('Point')
+
+
+    

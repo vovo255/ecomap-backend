@@ -545,7 +545,6 @@ def put_point(id):
         params = request.json
         session = db_session.create_session()
         token = request.headers['authorization']
-        session = db_session.create_session()
         user = session.query(User).filter(User.token == token).first()
 
         if user is None:
@@ -846,6 +845,9 @@ def subscribe_to_user(user_id):
                                                        Subscribe.subscriber_user == user).first()
         if subscription is not None:
             return make_response(jsonify({'error': 'Already subscribed'}), 400)
+        notification = Notification()
+        
+
 
         subscribe = Subscribe()
         subscribe.subscriber_user = user
@@ -984,6 +986,47 @@ def get_subscribers(user_id):
         session.close()
         return make_response(jsonify({'error': 'Missing argument'}), 400)
     except Exception:
+        return make_response(jsonify({'error': 'Something gone wrong'}), 400)
+
+
+blueprint.route('/api/notification', methods=['GET'])
+def get_notification():
+    try:
+        token = request.headers['authorization']
+        session = db_session.create_session()
+        user = session.query(User).filter(User.token == token).first()
+
+        if user is None:
+            session.close()
+            return make_response(jsonify({'error': 'Authorization failed'}), 403)
+        if user.expires_at > datetime.now().timestamp():
+            session.close()
+            return make_response(jsonify({'error': 'Authorization failde'}), 403)
+        
+        notifications = list(session.query(Notification).filter(notification.user_token == token).all())
+
+        if notifications is None:
+            session.close()
+            return make_response(jsonify({'error': 'Notifications not found'}), 404)
+        notification = notifications[-1]
+
+        response = dict()
+        response['user'] = {user.id, user.avatar, user.name, user.surname}
+        response['date'] = datetime.fromtimestamp(notification.date)
+        response['type'] = notification.notification_type
+        if notification.notification_type == 'subscribe':
+            response['data'] = notification.user.to_json()
+        else:
+            response['data'] = notification.point.to_json()
+        
+        session.delete(notification)
+        session.close()
+        return make_response(response, 200)
+    except KeyError:
+        session.close()
+        return make_response(jsonify({'error': 'Missing argument'}), 400)
+    except Exception:
+        session.close()
         return make_response(jsonify({'error': 'Something gone wrong'}), 400)
 
 
