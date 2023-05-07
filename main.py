@@ -514,24 +514,25 @@ def get_favorite_points():
         token = request.headers['authorization']
         user = session.query(User).filter(User.token == token).first()
 
-        types = params['types']
-        all_includes = params['allIncludes'].lower() == 'true'
-        is_accepted = params['isAccepted'].lower() == 'true'
+        # types = params['types']
+        # all_includes = params['allIncludes'].lower() == 'true'
+        # is_accepted = params['isAccepted'].lower() == 'true'
         if search is None:
-            points = session.query(Point).filter(Point.is_accepted == is_accepted).all()
+            points = session.query(Point).filter(Point.is_accepted == True).all()
         else:
-            points = session.query(Point).filter(Point.is_accepted == is_accepted, Point.title == search).all()
+            points = session.query(Point).filter(Point.is_accepted == True, Point.title == search).all()
 
-        types = json.loads(types)
-        if all_includes:
-            points_filtered = filter(
-                lambda x: len(set(types).intersection(set(json.loads(x.types)))) >= len(types) > 0,
-                points)
-        else:
-            points_filtered = filter(lambda x: len(set(types).intersection(set(json.loads(x.types)))) > 0,
-                                     points)
+        # types = json.loads(types)
+        # if all_includes:
+        #     points_filtered = filter(
+        #         lambda x: len(set(types).intersection(set(json.loads(x.types)))) >= len(types) > 0,
+        #         points)
+        # else:
+        #     points_filtered = filter(lambda x: len(set(types).intersection(set(json.loads(x.types)))) > 0,
+        #                              points)
 
-        total = len(points_filtered)
+        # total = len(points_filtered)
+        total = len(points)
 
         response = dict()
         response['currentPage'] = page
@@ -544,7 +545,8 @@ def get_favorite_points():
             session.close()
             return make_response(response, 200)
 
-        points_perf = points_filtered[(page - 1) * limit: page * limit]
+        # points_perf = points_filtered[(page - 1) * limit: page * limit]
+        points_perf = points[(page - 1) * limit: page * limit]
         for point in points_perf:
             point: Point
             for favorite in user.favorites:
@@ -574,7 +576,7 @@ def put_point(id):
 
         if user.expires_at < datetime.now().timestamp():
             return make_response(jsonify({'error': 'Authorization failed'}), 403)
-        
+
         if not user.is_admin:
             return make_response(jsonify({'error': 'Access denied'}), 403)
 
@@ -582,11 +584,11 @@ def put_point(id):
 
         if point is None:
             return make_response(jsonify({'error': 'Point not found'}), 404)
-        
+
         creator = session.query(User).filter(User.id == point.user_id).first()
         if creator is None:
             creator = user
-        
+
         notification = Notification()
         notification.user_id = creator.id
         notification.date = datetime.now().timestamp()
@@ -630,12 +632,12 @@ def delete_point(id):
 
         if not user.is_admin:
             return make_response(jsonify({'error': 'Access denied'}), 403)
-        
+
         point = session.query(Point).filter(Point.id == id).first()
 
         if point is None:
             return make_response(jsonify({'error': 'Point not found'}), 404)
-        
+
         creator = session.query(User).filter(User.id == point.user_id).first()
         if creator is None:
             creator = user
@@ -645,7 +647,6 @@ def delete_point(id):
         notification.date = datetime.now().timestamp()
         notification.notification_type = 'decline'
         notification.obj_id = point.id
-
 
         session.add(notification)
         session.delete(point)
@@ -841,6 +842,10 @@ def put_profile():
         session = db_session.create_session()
         user = session.query(User).filter(User.token == token).first()
 
+        with open('test.txt', 'w') as f:
+            f.write(str(params))
+            f.write(str(request.headers))
+
         if user is None:
             return make_response(jsonify({'error': 'Authorization failed'}), 403)
 
@@ -896,13 +901,12 @@ def subscribe_to_user(user_id):
                                                        Subscribe.subscriber_user == user).first()
         if subscription is not None:
             return make_response(jsonify({'error': 'Already subscribed'}), 400)
-        
+
         notification = Notification()
         notification.user_id = user_to_subscribe.id
         notification.date = datetime.now().timestamp()
         notification.notification_type = 'subscribe'
         notification.obj_id = user.id
-
 
         subscribe = Subscribe()
         subscribe.subscriber_user = user
@@ -959,6 +963,8 @@ def get_subscriptions():
 
 
 blueprint.route('/api/notification', methods=['GET'])
+
+
 def get_notification():
     try:
         token = request.headers['authorization']
@@ -971,7 +977,7 @@ def get_notification():
         if user.expires_at > datetime.now().timestamp():
             session.close()
             return make_response(jsonify({'error': 'Authorization failde'}), 403)
-        
+
         notifications = list(session.query(Notification).filter(notification.user_id == user.id).all())
 
         if notifications.count == 0:
@@ -989,7 +995,7 @@ def get_notification():
         else:
             point = session.query(Point).filter(Point.id == notification.obj_id).first()
             response['data'] = point.to_json()
-        
+
         session.delete(notification)
         session.commit()
         session.close()
