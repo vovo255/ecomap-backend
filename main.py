@@ -339,7 +339,7 @@ def delete_article(article_id):
         if not user.is_admin:
             return make_response(jsonify({'error': 'Access is denied'}), 403)
 
-        article = session.query(Article).filter(Article.id == atricle_id).first()
+        article = session.query(Article).filter(Article.id == article_id).first()
 
         if article is None:
             return make_response(jsonify({'error': "Article is not exist"}), 404)
@@ -877,7 +877,7 @@ def get_subscriptions():
         if user.expires_at < datetime.now().timestamp():
             return make_response(jsonify({'error': 'Authorization failed'}), 403)
 
-        subscriptions = list(session.query(Subscribe).filter(Subscribe.subscriber_user == user).all())
+        subscriptions = list(session.query(Subscribe).filter(Subscribe.subscriber_user_id == user.id).all())
 
         response = dict()
         response['users'] = []
@@ -896,95 +896,6 @@ def get_subscriptions():
         return make_response(jsonify({'error': 'Something gone wrong'}), 400)
 
 
-@blueprint.route('/api/profile/subscribe/<user_id>/', methods=['GET'])
-def get_subscriptions(user_id):
-    try:
-        session = db_session.create_session()
-        user = session.query(User).filter(User.id == user_id).first()
-
-        if user is None:
-            return make_response(jsonify({'error': 'User not found'}), 403)
-
-        if user.expires_at < datetime.now().timestamp():
-            return make_response(jsonify({'error': 'Authorization failed'}), 403)
-
-        subscriptions = list(session.query(Subscribe).filter(Subscribe.subscriber_user == user).all())
-
-        response = dict()
-        response['users'] = []
-
-        for user in subscriptions:
-            user: User
-            response['users'].append(user.to_json())
-
-        session.close()
-        return make_response(response, 200)
-
-    except KeyError:
-        session.close()
-        return make_response(jsonify({'error': 'Missing argument'}), 400)
-    except Exception:
-        return make_response(jsonify({'error': 'Something gone wrong'}), 400)
-
-
-@blueprint.route('/api/profile/subscribers', methods=['GET'])
-def get_subscribers():
-    try:
-        session = db_session.create_session()
-        token = request.headers['authorization']
-        user = session.query(User).filter(User.token == token).first()
-
-        if user is None:
-            return make_response(jsonify({'error': 'Authorization failed'}), 403)
-
-        if user.expires_at < datetime.now().timestamp():
-            return make_response(jsonify({'error': 'Authorization failed'}), 403)
-
-        subscribers = list(session.query(Subscribe).filter(Subscribe.subscribed_to_user == user).all())
-
-        response = dict()
-        response['users'] = []
-
-        for user in subscribers:
-            user: User
-            response['users'].append(user.to_json())
-
-        session.close()
-        return make_response(response, 200)
-
-    except KeyError:
-        session.close()
-        return make_response(jsonify({'error': 'Missing argument'}), 400)
-    except Exception:
-        return make_response(jsonify({'error': 'Something gone wrong'}), 400)
-
-
-@blueprint.route('/api/profile/subscribers/<user_id>/', methods=['GET'])
-def get_subscribers(user_id):
-    try:
-        session = db_session.create_session()
-        user = session.query(User).filter(User.id == user_id).first()
-
-        if user is None:
-            return make_response(jsonify({'error': 'User not found'}), 403)
-
-        subscribers = list(session.query(Subscribe).filter(Subscribe.subscribed_to_user == user).all())
-
-        response = dict()
-        response['users'] = []
-
-        for user in subscribers:
-            user: User
-            response['users'].append(user.to_json())
-
-        session.close()
-        return make_response(response, 200)
-
-    except KeyError:
-        session.close()
-        return make_response(jsonify({'error': 'Missing argument'}), 400)
-    except Exception:
-        return make_response(jsonify({'error': 'Something gone wrong'}), 400)
 
 
 app = Flask(__name__)
