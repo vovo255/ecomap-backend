@@ -96,7 +96,7 @@ class Subscribe(SqlAlchemyBase):
     id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True, autoincrement=True)
     subscribed_to_user_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('users.id'))
     subscribed_to_user = orm.relationship("User")
-    subscriber_user_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('users.id'))
+    subscriber_user_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey(subscribed_to_user_id))
     subscriber_user = orm.relationship("User")
 
 
