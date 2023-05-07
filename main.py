@@ -488,6 +488,8 @@ def get_point(point_id):
         session = db_session.create_session()
         is_accepted = params['isAccepted'].lower() == 'true'
         point = session.query(Point).filter(Point.is_accepted == is_accepted, Point.id == int(point_id)).first()
+        if point is None:
+            return make_response(jsonify({'error': 'Point not found'}), 403)
 
         response = point.to_json()
 
