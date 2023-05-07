@@ -41,6 +41,7 @@ def test_login():
 
     print(resp.status_code)
     pprint(resp.json())
+    return resp.json()['token']
 
 
 def test_post_article(token):
@@ -109,6 +110,34 @@ def test_profile(token):
     pprint(resp.json())
 
 
+def test_subscribe_to_user(token, user_id):
+    headers = dict()
+    headers['authorization'] = token
+
+    resp = post(DOMEN + '/api/profile/subscribe/' + user_id, headers=headers)
+
+    print(resp.status_code)
+    pprint(resp.json())
+
+
+def test_subscribe(user_id):
+    headers = dict()
+
+    resp = get(DOMEN + '/api/profile/subscribe/' + user_id, headers=headers)
+
+    print(resp.status_code)
+    pprint(resp.json())
+
+
+def test_subscribers(user_id):
+    headers = dict()
+
+    resp = get(DOMEN + '/api/profile/subscribers/' + user_id, headers=headers)
+
+    print(resp.status_code)
+    pprint(resp.json())
+
+
 def test_post_point(token):
     test_6_query = dict()
     test_6_query['title'] = 'Точка 3'
@@ -144,7 +173,7 @@ def test_get_points(token):
 
 
 if __name__ == '__main__':
-    test_registration()
+    # test_registration()
     # test_login()
     # test_post_article('7d3c7d21c652f4bd24a53d644915fe095081d5b82ad674d7f23b48a88c730bec')
     # test_get_article('7d3c7d21c652f4bd24a53d644915fe095081d5b82ad674d7f23b48a88c730bec')
@@ -155,3 +184,5 @@ if __name__ == '__main__':
     # test_post_point('7141ec0c35c7778ff8bfbfd9cd9bca794f924445e014c759bc5cce8e381652cd')
     # test_get_points('7141ec0c35c7778ff8bfbfd9cd9bca794f924445e014c759bc5cce8e381652cd')
     # test_profile('d0d3ae15dcc228318ee490ca462011aa21b58ea0562cfd10bb43ba02132e7425')
+    test_subscribe_to_user(test_login(), 1)
+    test_subscribers(1)

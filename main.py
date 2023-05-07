@@ -864,6 +864,129 @@ def subscribe_to_user(user_id):
         return make_response(jsonify({'error': 'Something gone wrong'}), 400)
 
 
+@blueprint.route('/api/profile/subscribe', methods=['GET'])
+def get_subscriptions():
+    try:
+        session = db_session.create_session()
+        token = request.headers['authorization']
+        user = session.query(User).filter(User.token == token).first()
+
+        if user is None:
+            return make_response(jsonify({'error': 'Authorization failed'}), 403)
+
+        if user.expires_at < datetime.now().timestamp():
+            return make_response(jsonify({'error': 'Authorization failed'}), 403)
+
+        subscriptions = list(session.query(Subscribe).filter(Subscribe.subscriber_user == user).all())
+
+        response = dict()
+        response['users'] = []
+
+        for user in subscriptions:
+            user: User
+            response['users'].append(user.to_json())
+
+        session.close()
+        return make_response(response, 200)
+
+    except KeyError:
+        session.close()
+        return make_response(jsonify({'error': 'Missing argument'}), 400)
+    except Exception:
+        return make_response(jsonify({'error': 'Something gone wrong'}), 400)
+
+
+@blueprint.route('/api/profile/subscribe/<user_id>/', methods=['GET'])
+def get_subscriptions(user_id):
+    try:
+        session = db_session.create_session()
+        user = session.query(User).filter(User.id == user_id).first()
+
+        if user is None:
+            return make_response(jsonify({'error': 'User not found'}), 403)
+
+        if user.expires_at < datetime.now().timestamp():
+            return make_response(jsonify({'error': 'Authorization failed'}), 403)
+
+        subscriptions = list(session.query(Subscribe).filter(Subscribe.subscriber_user == user).all())
+
+        response = dict()
+        response['users'] = []
+
+        for user in subscriptions:
+            user: User
+            response['users'].append(user.to_json())
+
+        session.close()
+        return make_response(response, 200)
+
+    except KeyError:
+        session.close()
+        return make_response(jsonify({'error': 'Missing argument'}), 400)
+    except Exception:
+        return make_response(jsonify({'error': 'Something gone wrong'}), 400)
+
+
+@blueprint.route('/api/profile/subscribers', methods=['GET'])
+def get_subscribers():
+    try:
+        session = db_session.create_session()
+        token = request.headers['authorization']
+        user = session.query(User).filter(User.token == token).first()
+
+        if user is None:
+            return make_response(jsonify({'error': 'Authorization failed'}), 403)
+
+        if user.expires_at < datetime.now().timestamp():
+            return make_response(jsonify({'error': 'Authorization failed'}), 403)
+
+        subscribers = list(session.query(Subscribe).filter(Subscribe.subscribed_to_user == user).all())
+
+        response = dict()
+        response['users'] = []
+
+        for user in subscribers:
+            user: User
+            response['users'].append(user.to_json())
+
+        session.close()
+        return make_response(response, 200)
+
+    except KeyError:
+        session.close()
+        return make_response(jsonify({'error': 'Missing argument'}), 400)
+    except Exception:
+        return make_response(jsonify({'error': 'Something gone wrong'}), 400)
+
+
+@blueprint.route('/api/profile/subscribers/<user_id>/', methods=['GET'])
+def get_subscribers(user_id):
+    try:
+        session = db_session.create_session()
+        user = session.query(User).filter(User.id == user_id).first()
+
+        if user is None:
+            return make_response(jsonify({'error': 'User not found'}), 403)
+
+        subscribers = list(session.query(Subscribe).filter(Subscribe.subscribed_to_user == user).all())
+
+        response = dict()
+        response['users'] = []
+
+        for user in subscribers:
+            user: User
+            response['users'].append(user.to_json())
+
+        session.close()
+        return make_response(response, 200)
+
+    except KeyError:
+        session.close()
+        return make_response(jsonify({'error': 'Missing argument'}), 400)
+    except Exception:
+        return make_response(jsonify({'error': 'Something gone wrong'}), 400)
+
+
 app = Flask(__name__)
 CORS(app)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
